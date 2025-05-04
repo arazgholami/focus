@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="./focus-icon.png" type="image/png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="Focus">
+  <meta name="apple-mobile-web-app-title" content="Focus">
+  <meta name="theme-color" content="#f8f5f0">
+  <meta name="msapplication-navbutton-color" content="#f8f5f0">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="msapplication-starturl" content="/">
+  <title>Focus</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    @font-face {
+      font-family: 'Iran';
+      src: url('https://fonts.cdnfonts.com/css/iran-sans') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    :root {
+      --bg-color: #f8f5f0;
+      --text-color: #333;
+      --toolbar-bg: rgba(255, 255, 255, 0.8);
+      --toolbar-color: #333;
+      --paper-texture: url('./white-paper.png');
+    }
+
+    [data-theme="dark"] {
+      --bg-color: #2d2d2d;
+      --text-color: #e0e0e0;
+      --toolbar-bg: rgba(45, 45, 45, 0.8);
+      --toolbar-color: #e0e0e0;
+      --paper-texture: url('./dark-paper.png');
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      background-image: var(--paper-texture);
+      background-repeat: repeat;
+      background-size: contain;
+      overflow-y: visible;
+    }
+
+    .rtl {
+      direction: rtl;
+      text-align: right;
+      font-family: 'Iran', sans-serif;
+    }
+
+    .ltr {
+      direction: ltr;
+      text-align: left;
+      font-family: 'Georgia', 'Times New Roman', serif;
+    }
+
+    #writing-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+      min-height: calc(100vh - 40px);
+      overflow-y: auto;
+    }
+
+    #paragraphs-container {
+      width: 100%;
+      max-width: 800px;
+      min-height: 70vh;
+    }
+
+    .paragraph-editor {
+      width: 100%;
+      margin-bottom: 0;
+      font-size: 18px;
+      line-height: 1.6;
+      background: transparent;
+      border: none;
+      resize: none;
+      outline: none;
+      color: var(--text-color);
+      transition: color 0.3s;
+      overflow: hidden;
+    }
+
+    .first-paragraph {
+      font-weight: bold;
+      font-size: 24px;
+    }
+
+    #toolbar {
+      position: fixed;
+      left: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      padding: 15px 10px;
+      border-radius: 8px;
+      background-color: var(--toolbar-bg);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+      transition: opacity 0.3s, left 0.3s, background-color 0.3s;
+      opacity: 0;
+      z-index: 1000;
+    }
+
+    #toolbar:hover,
+    #toolbar.visible {
+      opacity: 1;
+    }
+
+    #toolbar button {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+      color: var(--toolbar-color);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.2s;
+    }
+
+    #toolbar button:hover {
+      background-color: rgba(0, 0, 0, 0.1);
+    }
+
+    #status-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 40px;
+      background-color: var(--toolbar-bg);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 15px;
+      color: var(--toolbar-color);
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .status-left, .status-right {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .logo {
+      height: 24px;
+      width: auto;
+      border-radius: 4px;
+    }
+
+    .status-link {
+      color: var(--toolbar-color);
+      text-decoration: none;
+      font-size: 14px;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+    }
+
+    .status-link:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+
+    #counter {
+      font-size: 14px;
+      color: gray;
+    }
+
+    .action-btn {
+      background: transparent;
+      border: 1px solid var(--text-color);
+      color: var(--text-color);
+      border-radius: 4px;
+      padding: 2px 10px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      font-size: 14px;
+    }
+
+    .action-btn:hover {
+      background-color: rgba(0, 0, 0, 0.1);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1001;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-content {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 10% auto;
+      padding: 20px;
+      border-radius: 8px;
+      width: 80%;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .writings-list {
+      list-style: none;
+      padding: 0;
+      margin: 20px 0;
+    }
+
+    .writing-item {
+      padding: 10px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .writing-item:not(:last-child) {
+      border-bottom: 1px solid #ddd;
+    }
+
+    .writing-item:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .delete-writing {
+      color: #dc3545;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .close-modal {
+      position: absolute;
+      right: 20px;
+      top: 10px;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--text-color);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    /* Fullscreen styles */
+    .fullscreen {
+      background-color: var(--bg-color);
+      background-image: var(--paper-texture);
+    }
+
+    /* Hide scrollbar until needed */
+    #writing-area::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    #writing-area::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    #writing-area::-webkit-scrollbar-thumb {
+      background-color: rgba(0, 0, 0, 0.2);
+      border-radius: 20px;
+    }
+
+    @media (max-width: 768px) {
+      #toolbar {
+        left: 10px;
+      }
+    }
+
+    /* Placeholder effect */
+    .paragraph-editor:empty:before {
+      content: attr(data-placeholder);
+      color: #aaa;
+    }
+  </style>
+  <link rel="manifest" href="#" id="dynamic-manifest">
+  <script>
+    // Create a dynamic web app manifest
+    const manifestData = {
+      "name": "Focus",
+      "short_name": "Focus",
+      "description": "A minimal writing application for focused writing",
+      "start_url": "/",
+      "display": "standalone",
+      "background_color": "#f8f5f0",
+      "theme_color": "#f8f5f0",
+      "icons": [
+        {
+          "src": "./focus.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        },
+        {
+          "src": "./focus.png",
+          "sizes": "512x512",
+          "type": "image/png"
+        }
+      ]
+    };
+    
+    // Create and set the dynamic manifest
+    const stringManifest = JSON.stringify(manifestData);
+    const blob = new Blob([stringManifest], {type: 'application/json'});
+    const manifestURL = URL.createObjectURL(blob);
+    document.querySelector('#dynamic-manifest').setAttribute('href', manifestURL);
+  </script>
+</head>
+<body>
+  <!-- Audio elements -->
+  <audio src="sounds/key-01.mp3" id="mp3-key-01"></audio>
+  <audio src="sounds/key-02.mp3" id="mp3-key-02"></audio>
+  <audio src="sounds/key-03.mp3" id="mp3-key-03"></audio>
+  <audio src="sounds/key-04.mp3" id="mp3-key-04"></audio>
+  <audio src="sounds/key-new-01.mp3" id="mp3-key-new-01"></audio>
+  <audio src="sounds/key-new-02.mp3" id="mp3-key-new-02"></audio>
+  <audio src="sounds/key-new-03.mp3" id="mp3-key-new-03"></audio>
+  <audio src="sounds/key-new-04.mp3" id="mp3-key-new-04"></audio>
+  <audio src="sounds/key-new-05.mp3" id="mp3-key-new-05"></audio>
+  <audio src="sounds/return.mp3" id="mp3-return"></audio>
+  <audio src="sounds/return-new.mp3" id="mp3-return-new"></audio>
+  <audio src="sounds/scrollDown.mp3" id="mp3-scrollDown"></audio>
+  <audio src="sounds/scrollUp.mp3" id="mp3-scrollUp"></audio>
+  <audio src="sounds/space.mp3" id="mp3-space"></audio>
+  <audio src="sounds/space-new.mp3" id="mp3-space-new"></audio>
+
+  <!-- Main writing area -->
+  <div id="writing-area">
+    <div id="paragraphs-container">
+      <!-- Paragraphs will be added here dynamically -->
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div id="toolbar">
+    <button id="fullscreen-btn" title="Toggle Fullscreen"><i class="fas fa-expand"></i></button>
+    <button id="list-btn" title="Your Writings"><i class="fas fa-list"></i></button>
+    <button id="theme-btn" title="Toggle Dark Mode"><i class="fas fa-moon"></i></button>
+    <button id="sound-btn" title="Toggle Sounds"><i class="fas fa-volume-up"></i></button>
+    <button id="download-btn" title="Download as MD"><i class="fas fa-download"></i></button>
+  </div>
+
+  <div id="status-bar">
+    <div class="status-left">
+      <a href="./"><img src="./focus.png" alt="Focus Logo" class="logo"></a>
+      <span>Focus</span>
+      <a href="#" class="status-link">Github</a>
+      <a href="#" class="status-link">Contact</a>
+      <a href="#" class="status-link">Donate</a>
+    </div>
+    <div class="status-right">
+      <div id="counter"></div>
+      <button id="new-btn" class="action-btn">New</button>
+      <button id="save-btn" class="action-btn">Save</button>
+    </div>
+  </div>
+
+  <div id="writings-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal">&times;</span>
+      <ul class="writings-list" id="writings-list"></ul>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // DOM Elements
+      const paragraphsContainer = document.getElementById('paragraphs-container');
+      const toolbar = document.getElementById('toolbar');
+      const counter = document.getElementById('counter');
+      const saveBtn = document.getElementById('save-btn');
+      const newBtn = document.getElementById('new-btn');
+      const fullscreenBtn = document.getElementById('fullscreen-btn');
+      const listBtn = document.getElementById('list-btn');
+      const themeBtn = document.getElementById('theme-btn');
+      const soundBtn = document.getElementById('sound-btn');
+      const downloadBtn = document.getElementById('download-btn');
+      const writingsModal = document.getElementById('writings-modal');
+      const writingsList = document.getElementById('writings-list');
+      const closeModal = document.querySelector('.close-modal');
+      
+      // App state
+      let currentId = null;
+      let isSoundEnabled = true;
+      let isFullscreen = false;
+      let toolbarTimeout;
+      let typingTimeout;
+      let lastScrollPosition = 0;
+      let paragraphCount = 0;
+      const keysSounds = [
+        'mp3-key-01', 'mp3-key-02', 'mp3-key-03', 'mp3-key-04',
+        'mp3-key-new-01', 'mp3-key-new-02', 'mp3-key-new-03', 
+        'mp3-key-new-04', 'mp3-key-new-05'
+      ];
+
+      function handleFullscreenChange() {
+        if (!document.fullscreenElement &&
+                !document.webkitFullscreenElement &&
+                !document.mozFullScreenElement &&
+                !document.msFullscreenElement) {
+          isFullscreen = false;
+          document.body.classList.remove('fullscreen');
+          fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
+        }
+      }
+
+      // Initialize app
+      initApp();
+
+      function initApp() {
+        const sounds = [
+          'mp3-key-01', 'mp3-key-02', 'mp3-key-03', 'mp3-key-04',
+          'mp3-key-new-01', 'mp3-key-new-02', 'mp3-key-new-03',
+          'mp3-key-new-04', 'mp3-key-new-05', 'mp3-return',
+          'mp3-return-new', 'mp3-scrollDown', 'mp3-scrollUp',
+          'mp3-space', 'mp3-space-new'
+        ];
+        sounds.forEach(id => {
+          const audio = document.getElementById(id);
+          audio.load();
+        });
+
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+        document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+        updateToolbarVisibility();
+        loadDraft();
+        updateCounter();
+        
+        if (paragraphCount === 0) {
+          // Create first paragraph if none exists
+          createParagraph(true);
+        }
+        
+        // Set event listeners
+        document.addEventListener('mousemove', showToolbar);
+        saveBtn.addEventListener('click', saveWriting);
+        newBtn.addEventListener('click', newDocument);
+        fullscreenBtn.addEventListener('click', toggleFullscreen);
+        listBtn.addEventListener('click', openWritingsList);
+        themeBtn.addEventListener('click', toggleTheme);
+        soundBtn.addEventListener('click', toggleSound);
+        downloadBtn.addEventListener('click', downloadAsMarkdown);
+        closeModal.addEventListener('click', closeModalHandler);
+        window.addEventListener('click', (e) => {
+          if (e.target === writingsModal) closeModalHandler();
+        });
+
+        // Handle scroll for scroll sounds
+        document.getElementById('writing-area').addEventListener('scroll', handleScroll);
+
+        // Check for saved theme preference
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          themeBtn.innerHTML = '<i class="fas fa-sun"></i>';
+        }
+
+        // Check for saved sound preference
+        const savedSound = localStorage.getItem('soundEnabled');
+        if (savedSound === 'false') {
+          isSoundEnabled = false;
+          soundBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+        }
+        
+        // Set auto-save interval
+        setInterval(autoSaveDraft, 5000);
+      }
+
+      function createParagraph(isFirst = false, content = '', autoFocus = true) {
+        const div = document.createElement('div');
+        div.className = 'paragraph-wrapper';
+        
+        const textarea = document.createElement('textarea');
+        textarea.className = `paragraph-editor ${isFirst ? 'first-paragraph' : ''}`;
+        textarea.setAttribute('data-placeholder', isFirst ? 'Start writing...' : '');
+        textarea.spellcheck = false;
+        textarea.rows = 1;
+        textarea.value = content;
+        
+        // Set initial direction
+        if (content) {
+          detectDirection(textarea);
+        }
+        
+        // Event listeners for the paragraph
+        textarea.addEventListener('input', (e) => {
+          handleParagraphInput(e);
+          updateCounter();
+          autoResizeTextarea(e.target);
+          clearTimeout(typingTimeout);
+          typingTimeout = setTimeout(autoSaveDraft, 2000);
+        });
+        
+        textarea.addEventListener('keydown', (e) => {
+          handleKeydown(e);
+        });
+
+        div.appendChild(textarea);
+        paragraphsContainer.appendChild(div);
+        
+        if (autoFocus) {
+          textarea.focus();
+        }
+        
+        paragraphCount++;
+        autoResizeTextarea(textarea);
+        return textarea;
+      }
+
+      function handleParagraphInput(e) {
+        const textarea = e.target;
+        detectDirection(textarea);
+      }
+
+      function detectDirection(textarea) {
+        // Detect text direction based on first character
+        const text = textarea.value.trim();
+        if (text) {
+          const firstChar = text[0];
+          const isRTL = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/.test(firstChar);
+          
+          if (isRTL) {
+            textarea.classList.add('rtl');
+            textarea.classList.remove('ltr');
+          } else {
+            textarea.classList.add('ltr');
+            textarea.classList.remove('rtl');
+          }
+        }
+      }
+
+      function autoResizeTextarea(textarea) {
+        // Reset height to auto to get the correct scrollHeight
+        textarea.style.height = 'auto';
+        // Set new height based on scrollHeight
+        textarea.style.height = textarea.scrollHeight + 'px';
+      }
+
+      function handleKeydown(e) {
+        const textarea = e.target;
+        
+        if (isSoundEnabled) {
+          // Handle different key sounds
+          if (e.key === 'Enter') {
+            if (!e.shiftKey) {
+              e.preventDefault();
+              playSound(Math.random() > 0.5 ? 'mp3-return' : 'mp3-return-new');
+              
+              // Create new paragraph
+              const cursorPosition = textarea.selectionStart;
+              const textBeforeCursor = textarea.value.substring(0, cursorPosition);
+              const textAfterCursor = textarea.value.substring(cursorPosition);
+              
+              // Update current paragraph with text before cursor
+              textarea.value = textBeforeCursor;
+              autoResizeTextarea(textarea);
+              
+              // Create new paragraph with text after cursor
+              const nextParagraph = createParagraph(false, textAfterCursor);
+              
+              // Adjust focus
+              nextParagraph.focus();
+              
+              updateCounter();
+              return;
+            }
+          } else if (e.key === ' ') {
+            playSound(Math.random() > 0.5 ? 'mp3-space' : 'mp3-space-new');
+          } else if (e.key.length === 1) {
+            // Play random key sound for regular keys
+            const randomKeySound = keysSounds[Math.floor(Math.random() * keysSounds.length)];
+            playSound(randomKeySound);
+          } else if (e.key === 'Backspace' && textarea.selectionStart === 0 && textarea.selectionEnd === 0) {
+            // Handle backspace at beginning of paragraph
+            const allParagraphs = document.querySelectorAll('.paragraph-editor');
+            if (allParagraphs.length > 1) {
+              const index = Array.from(allParagraphs).indexOf(textarea);
+              if (index > 0) {
+                e.preventDefault();
+                
+                // Get previous paragraph
+                const prevParagraph = allParagraphs[index - 1];
+                const cursorPos = prevParagraph.value.length;
+                
+                // Merge text with previous paragraph
+                prevParagraph.value += textarea.value;
+                autoResizeTextarea(prevParagraph);
+                
+                // Remove current paragraph
+                textarea.parentElement.remove();
+                paragraphCount--;
+                
+                // Focus previous paragraph and set cursor
+                prevParagraph.focus();
+                prevParagraph.setSelectionRange(cursorPos, cursorPos);
+                
+                updateCounter();
+              }
+            }
+          }
+        }
+      }
+
+      function handleScroll(e) {
+        if (!isSoundEnabled) return;
+        
+        const currentPosition = e.target.scrollTop;
+        if (currentPosition > lastScrollPosition) {
+          playSound('mp3-scrollDown');
+        } else if (currentPosition < lastScrollPosition) {
+          playSound('mp3-scrollUp');
+        }
+        lastScrollPosition = currentPosition;
+      }
+
+      function playSound(id) {
+        const audio = document.getElementById(id);
+        if (audio) {
+          audio.currentTime = 0;
+          audio.play().catch(e => console.log('Sound play error:', e));
+        }
+      }
+
+      function showToolbar() {
+        toolbar.classList.add('visible');
+        clearTimeout(toolbarTimeout);
+        toolbarTimeout = setTimeout(() => {
+          toolbar.classList.remove('visible');
+        }, 3000);
+      }
+
+      function updateToolbarVisibility() {
+        document.addEventListener('mousemove', () => {
+          showToolbar();
+        });
+      }
+
+      function updateCounter() {
+        // Get all text from all paragraphs
+        const paragraphs = document.querySelectorAll('.paragraph-editor');
+        const text = Array.from(paragraphs).map(p => p.value).join('\n');
+        
+        const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+        const nonEmptyParagraphs = Array.from(paragraphs).filter(p => p.value.trim().length > 0).length;
+        
+        counter.innerHTML = `<i class="fas fa-font"></i> ${wordCount} <i class="fas fa-paragraph"></i> ${nonEmptyParagraphs}`;
+      }
+
+      function getTitle() {
+        const firstParagraph = document.querySelector('.first-paragraph');
+        return firstParagraph ? firstParagraph.value.trim().substring(0, 50) || 'Untitled' : 'Untitled';
+      }
+
+      function getContent() {
+        const paragraphs = document.querySelectorAll('.paragraph-editor');
+        return Array.from(paragraphs).map(p => p.value).join('\n');
+      }
+
+      function saveWriting() {
+        const content = getContent();
+        
+        if (!content.trim()) {
+          alert('Cannot save empty writing');
+          return;
+        }
+
+        const writings = JSON.parse(localStorage.getItem('writings') || '[]');
+        const title = getTitle();
+        const date = new Date().toISOString();
+        
+        if (currentId) {
+          // Update existing writing
+          const index = writings.findIndex(w => w.id === currentId);
+          if (index !== -1) {
+            writings[index] = { ...writings[index], title, content, updatedAt: date };
+          }
+        } else {
+          // Create new writing
+          currentId = Date.now().toString();
+          writings.push({
+            id: currentId,
+            title,
+            content,
+            createdAt: date,
+            updatedAt: date
+          });
+        }
+        
+        localStorage.setItem('writings', JSON.stringify(writings));
+        localStorage.removeItem('draft'); // Clear draft after save
+        alert('Writing saved!');
+      }
+      
+      function newDocument() {
+        // Save current document first if it has content
+        const content = getContent();
+        if (content.trim()) {
+          if (confirm("Save current document before creating a new one?")) {
+            saveWriting();
+          }
+        }
+        
+        // Clear current document
+        clearDocument();
+        
+        // Create first paragraph
+        createParagraph(true);
+        
+        // Reset current ID
+        currentId = null;
+        
+        updateCounter();
+      }
+      
+      function clearDocument() {
+        paragraphsContainer.innerHTML = '';
+        paragraphCount = 0;
+      }
+
+      function autoSaveDraft() {
+        const content = getContent();
+        
+        if (content.trim()) {
+          localStorage.setItem('draft', JSON.stringify({
+            content: content,
+            timestamp: new Date().toISOString()
+          }));
+        }
+      }
+
+      function loadDraft() {
+        const draftData = localStorage.getItem('draft');
+        if (draftData) {
+          const draft = JSON.parse(draftData);
+          loadContent(draft.content);
+        }
+      }
+      
+      function loadContent(content) {
+        clearDocument();
+        
+        // Split content into paragraphs
+        const paragraphs = content.split('\n');
+        
+        // Create paragraph elements
+        paragraphs.forEach((text, index) => {
+          createParagraph(index === 0, text, false);
+        });
+        
+        // Focus first paragraph if no content
+        if (paragraphs.length === 0) {
+          createParagraph(true);
+        }
+        
+        updateCounter();
+      }
+
+      function loadWriting(id) {
+        const writings = JSON.parse(localStorage.getItem('writings') || '[]');
+        const writing = writings.find(w => w.id === id);
+        
+        if (writing) {
+          // Save current draft before loading
+          autoSaveDraft();
+          
+          // Load selected writing
+          loadContent(writing.content);
+          currentId = writing.id;
+          closeModalHandler();
+        }
+      }
+
+      function deleteWriting(id, event) {
+        event.stopPropagation();
+        if (confirm('Are you sure you want to delete this writing?')) {
+          let writings = JSON.parse(localStorage.getItem('writings') || '[]');
+          writings = writings.filter(w => w.id !== id);
+          localStorage.setItem('writings', JSON.stringify(writings));
+          
+          if (currentId === id) {
+            clearDocument();
+            createParagraph(true);
+            currentId = null;
+            updateCounter();
+          }
+          
+          renderWritingsList();
+        }
+      }
+
+      function openWritingsList() {
+        renderWritingsList();
+        writingsModal.style.display = 'block';
+      }
+
+      function renderWritingsList() {
+        const writings = JSON.parse(localStorage.getItem('writings') || '[]');
+        writingsList.innerHTML = '';
+        
+        if (writings.length === 0) {
+          writingsList.innerHTML = '<li>No saved writings yet</li>';
+          return;
+        }
+        
+        // Sort by updated date (newest first)
+        writings.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+        
+        writings.forEach(writing => {
+          const li = document.createElement('li');
+          li.className = 'writing-item';
+          li.onclick = () => loadWriting(writing.id);
+          
+          const dateFormatted = new Date(writing.updatedAt).toLocaleString();
+          
+          li.innerHTML = `
+            <div>
+              <strong>${writing.title}</strong>
+              <div><small>${dateFormatted}</small></div>
+            </div>
+            <i class="fas fa-trash delete-writing" title="Delete"></i>
+          `;
+          
+          const deleteBtn = li.querySelector('.delete-writing');
+          deleteBtn.onclick = (e) => deleteWriting(writing.id, e);
+          
+          writingsList.appendChild(li);
+        });
+      }
+
+      function closeModalHandler() {
+        writingsModal.style.display = 'none';
+      }
+
+      function toggleFullscreen() {
+        if (!isFullscreen) {
+          if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen();
+          } else if (document.documentElement.mozRequestFullScreen) {
+            document.documentElement.mozRequestFullScreen();
+          } else if (document.documentElement.webkitRequestFullscreen) {
+            document.documentElement.webkitRequestFullscreen();
+          } else if (document.documentElement.msRequestFullscreen) {
+            document.documentElement.msRequestFullscreen();
+          }
+          document.body.classList.add('fullscreen');
+          fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+          }
+          document.body.classList.remove('fullscreen');
+          fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
+        }
+        isFullscreen = !isFullscreen;
+      }
+
+      function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+
+        themeBtn.innerHTML = newTheme === 'dark'
+                ? '<i class="fas fa-sun"></i>'
+                : '<i class="fas fa-moon"></i>';
+      }
+
+      function toggleSound() {
+        isSoundEnabled = !isSoundEnabled;
+        localStorage.setItem('soundEnabled', isSoundEnabled.toString());
+
+        soundBtn.innerHTML = isSoundEnabled
+                ? '<i class="fas fa-volume-up"></i>'
+                : '<i class="fas fa-volume-mute"></i>';
+      }
+
+      function downloadAsMarkdown() {
+        const content = getContent();
+
+        if (!content.trim()) {
+          alert('Nothing to download');
+          return;
+        }
+
+        // Get title from the first paragraph
+        const title = getTitle().replace(/[^\w\s]/gi, '').replace(/\s+/g, '-').toLowerCase() || 'untitled';
+
+        // Create blob with content
+        const blob = new Blob([content], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+
+        // Create download link and trigger click
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${title}.md`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    });
+  </script>
+</body>
+</html>
