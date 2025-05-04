@@ -15,12 +15,17 @@
   <title>Focus</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link rel="manifest" href="manifest.json">
   <style>
     @font-face {
       font-family: 'Iran';
-      src: url('https://fonts.cdnfonts.com/css/iran-sans') format('truetype');
-      font-weight: normal;
       font-style: normal;
+      font-weight: normal;
+      src: url('./fonts/eot/IRAN.eot');
+      src: url('./fonts/eot/IRAN.eot?#iefix') format('embedded-opentype'),  /* IE6-8 */
+        url('./fonts/woff2/IRAN.woff2') format('woff2'),  /* FF39+,Chrome36+, Opera24+*/
+        url('./fonts/woff/IRAN.woff') format('woff'),  /* FF3.6+, IE9, Chrome6+, Saf5.1+*/
+        url('./fonts/ttf/IRAN.ttf') format('truetype');
     }
 
     :root {
@@ -303,37 +308,6 @@
       color: #aaa;
     }
   </style>
-  <link rel="manifest" href="#" id="dynamic-manifest">
-  <script>
-    // Create a dynamic web app manifest
-    const manifestData = {
-      "name": "Focus",
-      "short_name": "Focus",
-      "description": "A clean and simple writing tool",
-      "start_url": "/",
-      "display": "standalone",
-      "background_color": "#f8f5f0",
-      "theme_color": "#f8f5f0",
-      "icons": [
-        {
-          "src": "./focus.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        },
-        {
-          "src": "./focus.png",
-          "sizes": "512x512",
-          "type": "image/png"
-        }
-      ]
-    };
-    
-    // Create and set the dynamic manifest
-    const stringManifest = JSON.stringify(manifestData);
-    const blob = new Blob([stringManifest], {type: 'application/json'});
-    const manifestURL = URL.createObjectURL(blob);
-    document.querySelector('#dynamic-manifest').setAttribute('href', manifestURL);
-  </script>
 </head>
 <body>
   <!-- Audio elements -->
