@@ -15,7 +15,7 @@
   <title>Focus</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="./manifest.json">
   <style>
     @font-face {
       font-family: 'Iran';
@@ -103,6 +103,21 @@
       color: var(--text-color);
       transition: color 0.3s;
       overflow: hidden;
+      padding: 5px;
+      min-height: 24px;
+    }
+
+    /* Make contenteditable div function more like a textarea */
+    [contenteditable="true"].paragraph-editor {
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+    }
+
+    Remove default outline but add subtle indication when focused
+    [contenteditable="true"].paragraph-editor:focus {
+      outline: none;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.05);
+      background-color: rgba(0,0,0,0.01);
     }
 
     .first-paragraph {
@@ -307,6 +322,49 @@
       content: attr(data-placeholder);
       color: #aaa;
     }
+
+    /* Format popup */
+    #format-popup {
+      position: absolute;
+      display: none;
+      background-color: var(--toolbar-bg);
+      border-radius: 5px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      padding: 5px;
+      z-index: 1000;
+    }
+
+    #format-popup button {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      color: var(--toolbar-color);
+      width: 32px;
+      height: 32px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.2s;
+    }
+
+    #format-popup button:hover {
+      background-color: rgba(0, 0, 0, 0.1);
+    }
+
+    /* Style for formatted text */
+    .paragraph-editor .bold {
+      font-weight: bold;
+    }
+
+    .paragraph-editor .italic {
+      font-style: italic;
+    }
+
+    .paragraph-editor .underline {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
@@ -476,75 +534,65 @@
         const div = document.createElement('div');
         div.className = 'paragraph-wrapper';
         
-        const textarea = document.createElement('textarea');
-        textarea.className = `paragraph-editor ${isFirst ? 'first-paragraph' : ''}`;
-        textarea.setAttribute('data-placeholder', isFirst ? 'Start writing...' : '');
-        textarea.spellcheck = false;
-        textarea.rows = 1;
-        textarea.placeholder = isFirst ? 'Write something...' : '';
-        textarea.value = content;
+        const editorElement = document.createElement('div');
+        editorElement.className = `paragraph-editor ${isFirst ? 'first-paragraph' : ''}`;
+        editorElement.setAttribute('data-placeholder', isFirst ? 'Start writing...' : '');
+        editorElement.contentEditable = true;
+        editorElement.spellcheck = false;
+        editorElement.innerHTML = content;
         
         // Set initial direction
         if (content) {
-          detectDirection(textarea);
+          detectDirection(editorElement);
         }
         
         // Event listeners for the paragraph
-        textarea.addEventListener('input', (e) => {
+        editorElement.addEventListener('input', (e) => {
           handleParagraphInput(e);
           updateCounter();
-          autoResizeTextarea(e.target);
           clearTimeout(typingTimeout);
           typingTimeout = setTimeout(autoSaveDraft, 2000);
         });
         
-        textarea.addEventListener('keydown', (e) => {
+        editorElement.addEventListener('keydown', (e) => {
           handleKeydown(e);
         });
 
-        div.appendChild(textarea);
+        div.appendChild(editorElement);
         paragraphsContainer.appendChild(div);
         
         if (autoFocus) {
-          textarea.focus();
+          editorElement.focus();
         }
         
         paragraphCount++;
-        autoResizeTextarea(textarea);
-        return textarea;
+        return editorElement;
       }
 
       function handleParagraphInput(e) {
-        const textarea = e.target;
-        detectDirection(textarea);
+        const editorElement = e.target;
+        detectDirection(editorElement);
       }
 
-      function detectDirection(textarea) {
+      function detectDirection(editorElement) {
         // Detect text direction based on first character
-        const text = textarea.value.trim();
+        const text = editorElement.textContent.trim();
         if (text) {
           const firstChar = text[0];
           const isRTL = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/.test(firstChar);
           
           if (isRTL) {
-            textarea.classList.add('rtl');
-            textarea.classList.remove('ltr');
+            editorElement.classList.add('rtl');
+            editorElement.classList.remove('ltr');
           } else {
-            textarea.classList.add('ltr');
-            textarea.classList.remove('rtl');
+            editorElement.classList.add('ltr');
+            editorElement.classList.remove('rtl');
           }
         }
       }
 
-      function autoResizeTextarea(textarea) {
-        // Reset height to auto to get the correct scrollHeight
-        textarea.style.height = 'auto';
-        // Set new height based on scrollHeight
-        textarea.style.height = textarea.scrollHeight + 'px';
-      }
-
       function handleKeydown(e) {
-        const textarea = e.target;
+        const editorElement = e.target;
         
         if (isSoundEnabled) {
           // Handle different key sounds
@@ -554,18 +602,46 @@
               playSound(Math.random() > 0.5 ? 'mp3-return' : 'mp3-return-new');
               
               // Create new paragraph
-              const cursorPosition = textarea.selectionStart;
-              const textBeforeCursor = textarea.value.substring(0, cursorPosition);
-              const textAfterCursor = textarea.value.substring(cursorPosition);
+              const selection = window.getSelection();
+              const range = selection.getRangeAt(0);
               
-              // Update current paragraph with text before cursor
-              textarea.value = textBeforeCursor;
-              autoResizeTextarea(textarea);
+              // Get content before and after cursor
+              const content = editorElement.innerHTML;
+              const beforeCursor = range.startContainer.textContent.substring(0, range.startOffset);
+              const afterCursor = range.startContainer.textContent.substring(range.startOffset);
               
-              // Create new paragraph with text after cursor
-              const nextParagraph = createParagraph(false, textAfterCursor);
+              // Create new content for current paragraph
+              if (range.startContainer === editorElement) {
+                // If selection is directly in the element (empty or at start/end)
+                editorElement.innerHTML = beforeCursor;
+              } else if (range.startContainer.nodeType === Node.TEXT_NODE) {
+                // If selection is in a text node
+                const fragment = document.createDocumentFragment();
+                for (let i = 0; i < editorElement.childNodes.length; i++) {
+                  const node = editorElement.childNodes[i];
+                  if (node === range.startContainer.parentNode || node === range.startContainer) {
+                    // Found the node containing cursor
+                    if (node.nodeType === Node.TEXT_NODE) {
+                      fragment.appendChild(document.createTextNode(beforeCursor));
+                    } else {
+                      const clone = node.cloneNode(false);
+                      clone.textContent = beforeCursor;
+                      fragment.appendChild(clone);
+                    }
+                    break;
+                  } else {
+                    // Add nodes before cursor position unchanged
+                    fragment.appendChild(node.cloneNode(true));
+                  }
+                }
+                editorElement.innerHTML = '';
+                editorElement.appendChild(fragment);
+              }
               
-              // Adjust focus
+              // Create new paragraph with content after cursor
+              const nextParagraph = createParagraph(false, afterCursor);
+              
+              // Focus new paragraph
               nextParagraph.focus();
               
               updateCounter();
@@ -577,35 +653,73 @@
             // Play random key sound for regular keys
             const randomKeySound = keysSounds[Math.floor(Math.random() * keysSounds.length)];
             playSound(randomKeySound);
-          } else if (e.key === 'Backspace' && textarea.selectionStart === 0 && textarea.selectionEnd === 0) {
+          } else if (e.key === 'Backspace' && isAtStartOfParagraph(editorElement)) {
             // Handle backspace at beginning of paragraph
             const allParagraphs = document.querySelectorAll('.paragraph-editor');
             if (allParagraphs.length > 1) {
-              const index = Array.from(allParagraphs).indexOf(textarea);
+              const index = Array.from(allParagraphs).indexOf(editorElement);
               if (index > 0) {
                 e.preventDefault();
                 
                 // Get previous paragraph
                 const prevParagraph = allParagraphs[index - 1];
-                const cursorPos = prevParagraph.value.length;
+                const prevContent = prevParagraph.innerHTML;
+                const currentContent = editorElement.innerHTML;
                 
                 // Merge text with previous paragraph
-                prevParagraph.value += textarea.value;
-                autoResizeTextarea(prevParagraph);
+                prevParagraph.innerHTML = prevContent + currentContent;
                 
                 // Remove current paragraph
-                textarea.parentElement.remove();
+                editorElement.parentElement.remove();
                 paragraphCount--;
                 
-                // Focus previous paragraph and set cursor
+                // Focus previous paragraph and set cursor at the end
                 prevParagraph.focus();
-                prevParagraph.setSelectionRange(cursorPos, cursorPos);
+                placeCursorAtEnd(prevParagraph);
                 
                 updateCounter();
               }
             }
           }
         }
+      }
+
+      // Helper to check if cursor is at start of paragraph
+      function isAtStartOfParagraph(element) {
+        const selection = window.getSelection();
+        if (selection.rangeCount === 0) return false;
+        
+        const range = selection.getRangeAt(0);
+        
+        if (range.startContainer === element && range.startOffset === 0) {
+          return true;
+        }
+        
+        if (range.startContainer.nodeType === Node.TEXT_NODE) {
+          if (range.startOffset === 0) {
+            // Check if this is the first text node
+            let firstTextNode = null;
+            for (let node of element.childNodes) {
+              if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '') {
+                firstTextNode = node;
+                break;
+              }
+            }
+            return range.startContainer === firstTextNode;
+          }
+        }
+        
+        return false;
+      }
+
+      // Helper to place cursor at end of element
+      function placeCursorAtEnd(element) {
+        const range = document.createRange();
+        const selection = window.getSelection();
+        range.selectNodeContents(element);
+        range.collapse(false); // false = collapse to end
+        selection.removeAllRanges();
+        selection.addRange(range);
       }
 
       function handleScroll(e) {
@@ -645,22 +759,22 @@
       function updateCounter() {
         // Get all text from all paragraphs
         const paragraphs = document.querySelectorAll('.paragraph-editor');
-        const text = Array.from(paragraphs).map(p => p.value).join('\n');
+        const text = Array.from(paragraphs).map(p => p.textContent).join('\n');
         
         const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
-        const nonEmptyParagraphs = Array.from(paragraphs).filter(p => p.value.trim().length > 0).length;
+        const nonEmptyParagraphs = Array.from(paragraphs).filter(p => p.textContent.trim().length > 0).length;
         
         counter.innerHTML = `<i class="fas fa-font"></i> ${wordCount} <i class="fas fa-paragraph"></i> ${nonEmptyParagraphs}`;
       }
 
       function getTitle() {
         const firstParagraph = document.querySelector('.first-paragraph');
-        return firstParagraph ? firstParagraph.value.trim().substring(0, 50) || 'Untitled' : 'Untitled';
+        return firstParagraph ? firstParagraph.textContent.trim().substring(0, 50) || 'Untitled' : 'Untitled';
       }
 
       function getContent() {
         const paragraphs = document.querySelectorAll('.paragraph-editor');
-        return Array.from(paragraphs).map(p => p.value).join('\n');
+        return Array.from(paragraphs).map(p => p.innerHTML).join('\n');
       }
 
       function saveWriting() {
@@ -896,11 +1010,62 @@
           return;
         }
 
+        // Convert HTML to Markdown-like plain text
+        let markdownContent = '';
+        const paragraphs = document.querySelectorAll('.paragraph-editor');
+        
+        paragraphs.forEach((p, index) => {
+          // Create a deep clone to work with
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = p.innerHTML;
+          
+          // Process all formatting recursively
+          function processNode(node) {
+            if (node.nodeType === Node.TEXT_NODE) {
+              return node.textContent;
+            }
+            
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              let result = '';
+              let prefix = '';
+              let suffix = '';
+              
+              // Determine formatting based on node type or style
+              if (node.nodeName === 'STRONG' || node.nodeName === 'B' || 
+                  (node.style && node.style.fontWeight === 'bold')) {
+                prefix = '**';
+                suffix = '**';
+              } else if (node.nodeName === 'EM' || node.nodeName === 'I' || 
+                         (node.style && node.style.fontStyle === 'italic')) {
+                prefix = '_';
+                suffix = '_';
+              } else if (node.nodeName === 'U' || 
+                         (node.style && node.style.textDecoration === 'underline')) {
+                prefix = '__';
+                suffix = '__';
+              }
+              
+              // Process all child nodes
+              for (const child of node.childNodes) {
+                result += processNode(child);
+              }
+              
+              return prefix + result + suffix;
+            }
+            
+            return '';
+          }
+          
+          // Process the paragraph content
+          const processedText = processNode(tempDiv);
+          markdownContent += processedText + (index < paragraphs.length - 1 ? '\n\n' : '');
+        });
+
         // Get title from the first paragraph
         const title = getTitle().replace(/[^\w\s]/gi, '').replace(/\s+/g, '-').toLowerCase() || 'untitled';
 
         // Create blob with content
-        const blob = new Blob([content], { type: 'text/markdown' });
+        const blob = new Blob([markdownContent], { type: 'text/markdown' });
         const url = URL.createObjectURL(blob);
 
         // Create download link and trigger click
@@ -912,7 +1077,119 @@
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
       }
+
+      // Text formatting popup functionality
+      const formatPopup = document.getElementById('format-popup');
+      const boldBtn = document.getElementById('format-bold');
+      const italicBtn = document.getElementById('format-italic');
+      const underlineBtn = document.getElementById('format-underline');
+      
+      let currentSelection = null;
+      let currentTextarea = null;
+
+      // Add event listeners for text selection
+      document.addEventListener('mouseup', showFormatPopup);
+      document.addEventListener('keyup', (e) => {
+        // Show popup on arrow keys or Shift+arrows to allow keyboard selection
+        if (e.key.includes('Arrow') || e.key.includes('Shift')) {
+          showFormatPopup(e);
+        }
+      });
+
+      // Hide popup when clicking outside
+      document.addEventListener('mousedown', (e) => {
+        if (!formatPopup.contains(e.target)) {
+          formatPopup.style.display = 'none';
+        }
+      });
+
+      // Format buttons event listeners
+      boldBtn.addEventListener('click', () => applyFormat('bold'));
+      italicBtn.addEventListener('click', () => applyFormat('italic'));
+      underlineBtn.addEventListener('click', () => applyFormat('underline'));
+
+      function showFormatPopup(e) {
+        // Find the active editor element
+        if (e.target && e.target.classList && e.target.classList.contains('paragraph-editor')) {
+          const selection = window.getSelection();
+          
+          // Only show popup if text is selected
+          if (selection && !selection.isCollapsed) {
+            const range = selection.getRangeAt(0);
+            currentTextarea = e.target;
+            
+            // Get the selection coordinates
+            const selectionRect = range.getBoundingClientRect();
+            
+            // Calculate popup dimensions
+            const popupWidth = 120; // Estimated width of popup
+            const popupHeight = 42; // Estimated height of popup
+            
+            // Calculate position ensuring it stays in viewport
+            let left = selectionRect.left + (selectionRect.width / 2) - (popupWidth / 2);
+            let top = selectionRect.top - popupHeight - 5; // 5px spacing
+            
+            // Check if popup would go outside viewport boundaries
+            if (left + popupWidth > window.innerWidth) {
+              left = window.innerWidth - popupWidth - 10; // Keep 10px margin
+            }
+            if (left < 10) {
+              left = 10; // Keep 10px margin from left
+            }
+            if (top < 10) {
+              // If not enough space above, show below
+              top = selectionRect.bottom + 5; // Position below text
+            }
+            
+            // Position popup
+            formatPopup.style.left = left + 'px';
+            formatPopup.style.top = top + 'px';
+            formatPopup.style.display = 'flex';
+            
+            e.stopPropagation();
+          } else {
+            formatPopup.style.display = 'none';
+          }
+        } else {
+          formatPopup.style.display = 'none';
+        }
+      }
+
+      function applyFormat(format) {
+        const selection = window.getSelection();
+        if (!selection || selection.isCollapsed || !currentTextarea) return;
+        
+        // Apply formatting using document.execCommand
+        document.execCommand('styleWithCSS', false, true);
+        
+        switch (format) {
+          case 'bold':
+            document.execCommand('bold', false, null);
+            break;
+          case 'italic':
+            document.execCommand('italic', false, null);
+            break;
+          case 'underline':
+            document.execCommand('underline', false, null);
+            break;
+        }
+        
+        // Hide popup
+        formatPopup.style.display = 'none';
+        
+        // Update counter and autosave
+        updateCounter();
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(autoSaveDraft, 2000);
+      }
     });
   </script>
+
+  <!-- Format popup -->
+  <div id="format-popup">
+    <button id="format-bold" title="Bold"><i class="fas fa-bold"></i></button>
+    <button id="format-italic" title="Italic"><i class="fas fa-italic"></i></button>
+    <button id="format-underline" title="Underline"><i class="fas fa-underline"></i></button>
+  </div>
 </body>
 </html>
