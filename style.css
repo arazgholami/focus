@@ -107,7 +107,7 @@ Remove default outline but add subtle indication when focused
 
 .first-paragraph {
     font-weight: bold;
-    font-size: 26px;
+    font-size: 26px !important;
 }
 
 #toolbar {
