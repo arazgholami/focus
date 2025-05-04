@@ -1,0 +1,374 @@
+@font-face {
+    font-family: 'Iran';
+    font-style: normal;
+    font-weight: normal;
+    src: url('./fonts/eot/IRAN.eot');
+    src: url('./fonts/eot/IRAN.eot?#iefix') format('embedded-opentype'),  /* IE6-8 */
+    url('./fonts/woff2/IRAN.woff2') format('woff2'),  /* FF39+,Chrome36+, Opera24+*/
+    url('./fonts/woff/IRAN.woff') format('woff'),  /* FF3.6+, IE9, Chrome6+, Saf5.1+*/
+    url('./fonts/ttf/IRAN.ttf') format('truetype');
+}
+
+:root {
+    --bg-color: #f8f5f0;
+    --text-color: #333;
+    --toolbar-bg: rgba(255, 255, 255, 0.8);
+    --toolbar-color: #333;
+    --paper-texture: url('./white-paper.png');
+}
+
+[data-theme="dark"] {
+    --bg-color: #2d2d2d;
+    --text-color: #e0e0e0;
+    --toolbar-bg: rgba(45, 45, 45, 0.8);
+    --toolbar-color: #e0e0e0;
+    --paper-texture: url('./dark-paper.png');
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    background-image: var(--paper-texture);
+    background-repeat: repeat;
+    overflow-y: visible;
+}
+
+p {
+    margin-bottom: 0.5rem;
+}
+
+.rtl {
+    direction: rtl;
+    text-align: right;
+    font-family: 'Iran', 'Georgia', 'Times New Roman', serif;
+}
+
+.ltr {
+    direction: ltr;
+    text-align: left;
+    font-family: 'Georgia', 'Times New Roman', 'Iran', serif;
+    font-size: 20px !important;
+}
+
+#writing-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+    min-height: calc(100vh - 40px);
+    overflow-y: auto;
+}
+
+#paragraphs-container {
+    width: 100%;
+    max-width: 800px;
+    min-height: 70vh;
+}
+
+.paragraph-editor {
+    width: 100%;
+    margin-bottom: 0;
+    font-size: 18px;
+    line-height: 1.6;
+    background: transparent;
+    border: none;
+    resize: none;
+    outline: none;
+    color: var(--text-color);
+    transition: color 0.3s;
+    overflow: hidden;
+    padding: 5px;
+    min-height: 24px;
+}
+
+/* Make contenteditable div function more like a textarea */
+[contenteditable="true"].paragraph-editor {
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+}
+
+Remove default outline but add subtle indication when focused
+[contenteditable="true"].paragraph-editor:focus {
+    outline: none;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.05);
+    background-color: rgba(0,0,0,0.01);
+}
+
+.first-paragraph {
+    font-weight: bold;
+    font-size: 26px;
+}
+
+#toolbar {
+    position: fixed;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px 10px;
+    border-radius: 8px;
+    background-color: var(--toolbar-bg);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    transition: opacity 0.3s, left 0.3s, background-color 0.3s;
+    opacity: 0;
+    z-index: 1000;
+}
+
+#toolbar:hover,
+#toolbar.visible {
+    opacity: 1;
+}
+
+#toolbar button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--toolbar-color);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+#toolbar button:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+#status-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    background-color: var(--toolbar-bg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 15px;
+    color: var(--toolbar-color);
+    transition: opacity 0.3s, background-color 0.3s, color 0.3s;
+    opacity: 0;
+    z-index: 1000;
+}
+
+#status-bar:hover,
+#status-bar.visible {
+    opacity: 1;
+}
+
+.status-left, .status-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.formatting-shortcuts {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: 10px;
+}
+
+.shortcut {
+    font-size: 12px;
+    opacity: 0.7;
+    padding: 2px 5px;
+    border-radius: 3px;
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.logo {
+    height: 24px;
+    width: auto;
+    border-radius: 4px;
+}
+
+.status-link {
+    color: var(--toolbar-color);
+    text-decoration: none;
+    font-size: 14px;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.status-link:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
+
+#counter {
+    font-size: 14px;
+    color: gray;
+}
+
+.action-btn {
+    background: transparent;
+    border: 1px solid var(--text-color);
+    color: var(--text-color);
+    border-radius: 4px;
+    padding: 2px 10px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 14px;
+}
+
+.action-btn:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1001;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin: 10% auto;
+    padding: 20px;
+    border-radius: 8px;
+    width: 80%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.writings-list {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0;
+}
+
+.writing-item {
+    padding: 10px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.writing-item:not(:last-child) {
+    border-bottom: 1px solid #ddd;
+}
+
+.writing-item:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.delete-writing {
+    color: #dc3545;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.close-modal {
+    position: absolute;
+    right: 20px;
+    top: 10px;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--text-color);
+}
+
+.hidden {
+    display: none;
+}
+
+/* Fullscreen styles */
+.fullscreen {
+    background-color: var(--bg-color);
+    background-image: var(--paper-texture);
+}
+
+/* Hide scrollbar until needed */
+#writing-area::-webkit-scrollbar {
+    width: 8px;
+}
+
+#writing-area::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#writing-area::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 20px;
+}
+
+@media (max-width: 768px) {
+    #toolbar {
+    left: 10px;
+    }
+}
+
+/* Placeholder effect */
+.paragraph-editor:empty:before {
+    content: attr(data-placeholder);
+    color: #aaa;
+}
+
+/* Format popup */
+#format-popup {
+    position: absolute;
+    display: none;
+    background-color: var(--toolbar-bg);
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    padding: 5px;
+    z-index: 1000;
+}
+
+#format-popup button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--toolbar-color);
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+#format-popup button:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Style for formatted text */
+.paragraph-editor .bold {
+    font-weight: bold;
+}
+
+.paragraph-editor .italic {
+    font-style: italic;
+}
+
+.paragraph-editor .underline {
+    text-decoration: underline;
+}
