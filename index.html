@@ -309,7 +309,7 @@
     const manifestData = {
       "name": "Focus",
       "short_name": "Focus",
-      "description": "A minimal writing application for focused writing",
+      "description": "A clean and simple writing tool",
       "start_url": "/",
       "display": "standalone",
       "background_color": "#f8f5f0",
@@ -371,11 +371,11 @@
 
   <div id="status-bar">
     <div class="status-left">
-      <a href="./"><img src="./focus.png" alt="Focus Logo" class="logo"></a>
+      <a href="https://arazgholami.github.io/focus"><img src="./focus.png" alt="Focus Logo" class="logo"></a>
       <span>Focus</span>
-      <a href="#" class="status-link">Github</a>
-      <a href="#" class="status-link">Contact</a>
-      <a href="#" class="status-link">Donate</a>
+      <a href="https://github.com/arazgholami/focus" target="_blank" class="status-link">Github</a>
+      <a href="mailto:contact@arazgholami.com" target="_blank"class="status-link">Contact</a>
+      <a href="https://buymeacoffee.com/arazgholami" target="_blank"class="status-link">Donate</a>
     </div>
     <div class="status-right">
       <div id="counter"></div>
@@ -507,6 +507,7 @@
         textarea.setAttribute('data-placeholder', isFirst ? 'Start writing...' : '');
         textarea.spellcheck = false;
         textarea.rows = 1;
+        textarea.placeholder = isFirst ? 'Write something...' : '';
         textarea.value = content;
         
         // Set initial direction
