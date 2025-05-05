@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements
-    const paragraphsContainer = document.getElementById('paragraphs-container');
+    const editor = document.getElementById('editor');
     const toolbar = document.getElementById('toolbar');
     const statusBar = document.getElementById('status-bar');
     const counter = document.getElementById('counter');
@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'mp3-key-01', 'mp3-key-02', 'mp3-key-03', 'mp3-key-04',
         'mp3-key-new-01', 'mp3-key-new-02', 'mp3-key-new-03',
         'mp3-key-new-04', 'mp3-key-new-05', 'mp3-return',
-        'mp3-return-new', 'mp3-scrollDown', 'mp3-scrollUp',
+        'mp3-scrollDown', 'mp3-scrollUp',
         'mp3-space', 'mp3-space-new'
     ];
     sounds.forEach(id => {
@@ -69,9 +69,9 @@ document.addEventListener('DOMContentLoaded', () => {
     loadDraft();
     updateCounter();
     
-    if (paragraphCount === 0) {
-        // Create first paragraph if none exists
-        createParagraph(true);
+    // Create first paragraph if none exists
+    if (!editor.querySelector('p')) {
+        createParagraph('', true);
     }
     
     // Set event listeners
@@ -109,208 +109,150 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Set auto-save interval
     setInterval(autoSaveDraft, 5000);
-    }
 
-    function createParagraph(isFirst = false, content = '', autoFocus = true) {
-    const div = document.createElement('div');
-    div.className = 'paragraph-wrapper';
-    
-    const editorElement = document.createElement('div');
-    editorElement.className = `paragraph-editor ${isFirst ? 'first-paragraph' : ''}`;
-    editorElement.setAttribute('data-placeholder', isFirst ? 'Start writing...' : '');
-    editorElement.contentEditable = true;
-    editorElement.spellcheck = false;
-    editorElement.innerHTML = content;
-    
-    // Set initial direction
-    if (content) {
-        detectDirection(editorElement);
-    }
-    
-    // Event listeners for the paragraph
-    editorElement.addEventListener('input', (e) => {
-        handleParagraphInput(e);
+    // Add input event listener for the editor
+    editor.addEventListener('input', (e) => {
+        handleEditorInput(e);
         updateCounter();
         clearTimeout(typingTimeout);
         typingTimeout = setTimeout(autoSaveDraft, 2000);
     });
-    
-    editorElement.addEventListener('keydown', (e) => {
-        handleKeydown(e);
-    });
 
-    div.appendChild(editorElement);
-    paragraphsContainer.appendChild(div);
-    
-    if (autoFocus) {
-        editorElement.focus();
-    }
-    
-    paragraphCount++;
-    return editorElement;
+    // Add keydown event listener for the editor
+    editor.addEventListener('keydown', handleKeydown);
     }
 
-    function handleParagraphInput(e) {
-    const editorElement = e.target;
-    detectDirection(editorElement);
-    }
-
-    function detectDirection(editorElement) {
-    // Detect text direction based on first character
-    const text = editorElement.textContent.trim();
-    if (text) {
-        const firstChar = text[0];
-        const isRTL = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/.test(firstChar);
-        
-        if (isRTL) {
-        editorElement.classList.add('rtl');
-        editorElement.classList.remove('ltr');
-        } else {
-        editorElement.classList.add('ltr');
-        editorElement.classList.remove('rtl');
+    function createParagraph(content = '', isFirst = false) {
+        const p = document.createElement('p');
+        p.innerHTML = content;
+        p.dir = 'auto';
+        if (isFirst) {
+            p.classList.add('first-paragraph');
         }
+        editor.appendChild(p);
+        return p;
+    }
+
+    function handleEditorInput(e) {
+    // Ensure each line is wrapped in a paragraph
+    const selection = window.getSelection();
+    const range = selection.getRangeAt(0);
+    const currentP = range.startContainer.closest('p');
+    
+    if (!currentP) {
+        // If cursor is not in a paragraph, wrap the content in a paragraph
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = editor.innerHTML;
+        editor.innerHTML = '';
+        
+        Array.from(tempDiv.childNodes).forEach(node => {
+            if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+                const p = document.createElement('p');
+                p.textContent = node.textContent;
+                p.dir = 'auto';
+                editor.appendChild(p);
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+                if (node.tagName === 'P') {
+                    editor.appendChild(node);
+                } else {
+                    const p = document.createElement('p');
+                    p.dir = 'auto';
+                    p.appendChild(node);
+                    editor.appendChild(p);
+                }
+            }
+        });
     }
     }
 
     function handleKeydown(e) {
-    const editorElement = e.target;
-    
-    // Handle keyboard shortcuts for formatting
-    if (e.ctrlKey) {
-        if (e.key === 'b') {
-        e.preventDefault();
-        applyFormat('bold');
-        return;
-        } else if (e.key === 'i') {
-        e.preventDefault();
-        applyFormat('italic');
-        return;
-        } else if (e.key === 'u') {
-        e.preventDefault();
-        applyFormat('underline');
-        return;
-        }
-    }
-    
-    if (isSoundEnabled) {
-        // Handle different key sounds
-        if (e.key === 'Enter') {
-        if (!e.shiftKey) {
-            e.preventDefault();
-            playSound(Math.random() > 0.5 ? 'mp3-return' : 'mp3-return-new');
-            
-            // Create new paragraph
-            const selection = window.getSelection();
-            const range = selection.getRangeAt(0);
-            
-            // Get content before and after cursor
-            const content = editorElement.innerHTML;
-            const beforeCursor = range.startContainer.textContent.substring(0, range.startOffset);
-            const afterCursor = range.startContainer.textContent.substring(range.startOffset);
-            
-            // Create new content for current paragraph
-            if (range.startContainer === editorElement) {
-            // If selection is directly in the element (empty or at start/end)
-            editorElement.innerHTML = beforeCursor;
-            } else if (range.startContainer.nodeType === Node.TEXT_NODE) {
-            // If selection is in a text node
-            const fragment = document.createDocumentFragment();
-            for (let i = 0; i < editorElement.childNodes.length; i++) {
-                const node = editorElement.childNodes[i];
-                if (node === range.startContainer.parentNode || node === range.startContainer) {
-                // Found the node containing cursor
-                if (node.nodeType === Node.TEXT_NODE) {
-                    fragment.appendChild(document.createTextNode(beforeCursor));
-                } else {
-                    const clone = node.cloneNode(false);
-                    clone.textContent = beforeCursor;
-                    fragment.appendChild(clone);
+        if (isSoundEnabled) {
+            if (e.key === 'Enter') {
+                if (!e.shiftKey) {
+                    e.preventDefault();
+                    playSound(Math.random() > 0.5 ? 'mp3-return' : 'mp3-return-new');
+                    
+                    // Create new paragraph
+                    const selection = window.getSelection();
+                    const range = selection.getRangeAt(0);
+                    const currentP = range.startContainer.nodeType === Node.TEXT_NODE 
+                        ? range.startContainer.parentElement 
+                        : range.startContainer;
+                    
+                    if (currentP && currentP.tagName === 'P') {
+                        // Create a temporary div to handle HTML content
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = currentP.innerHTML;
+                        
+                        // Split content at cursor position
+                        const beforeCursor = tempDiv.innerHTML.substring(0, range.startOffset);
+                        const afterCursor = tempDiv.innerHTML.substring(range.startOffset);
+                        
+                        // Update current paragraph
+                        currentP.innerHTML = beforeCursor;
+                        
+                        // Create new paragraph with content after cursor
+                        const newP = document.createElement('p');
+                        newP.innerHTML = afterCursor;
+                        newP.dir = 'auto';
+                        
+                        // Insert the new paragraph after the current one
+                        currentP.parentNode.insertBefore(newP, currentP.nextSibling);
+                        
+                        // Set cursor position at the start of the new paragraph
+                        const newRange = document.createRange();
+                        const newSelection = window.getSelection();
+                        
+                        // If the new paragraph has content, place cursor at start of first text node
+                        if (newP.firstChild) {
+                            newRange.setStart(newP.firstChild, 0);
+                        } else {
+                            newRange.setStart(newP, 0);
+                        }
+                        newRange.collapse(true);
+                        newSelection.removeAllRanges();
+                        newSelection.addRange(newRange);
+                        
+                        // Focus new paragraph
+                        newP.focus();
+                    }
+                    
+                    updateCounter();
+                    return;
                 }
-                break;
-                } else {
-                // Add nodes before cursor position unchanged
-                fragment.appendChild(node.cloneNode(true));
+            } else if (e.key === ' ') {
+                playSound(Math.random() > 0.5 ? 'mp3-space' : 'mp3-space-new');
+            } else if (e.key.length === 1) {
+                const randomKeySound = keysSounds[Math.floor(Math.random() * keysSounds.length)];
+                playSound(randomKeySound);
+            } else if (e.key === 'Backspace') {
+                const selection = window.getSelection();
+                const range = selection.getRangeAt(0);
+                const currentP = range.startContainer.nodeType === Node.TEXT_NODE 
+                    ? range.startContainer.parentElement 
+                    : range.startContainer;
+                
+                if (currentP && currentP.tagName === 'P' && range.startOffset === 0 && currentP.previousElementSibling) {
+                    e.preventDefault();
+                    
+                    // Create a temporary div to handle HTML content
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = currentP.previousElementSibling.innerHTML + currentP.innerHTML;
+                    
+                    // Merge with previous paragraph
+                    currentP.previousElementSibling.innerHTML = tempDiv.innerHTML;
+                    currentP.remove();
+                    
+                    // Focus previous paragraph and set cursor at the end
+                    currentP.previousElementSibling.focus();
+                    placeCursorAtEnd(currentP.previousElementSibling);
+                    
+                    updateCounter();
                 }
             }
-            editorElement.innerHTML = '';
-            editorElement.appendChild(fragment);
-            }
-            
-            // Create new paragraph with content after cursor
-            const nextParagraph = createParagraph(false, afterCursor);
-            
-            // Focus new paragraph
-            nextParagraph.focus();
-            
-            updateCounter();
-            return;
         }
-        } else if (e.key === ' ') {
-        playSound(Math.random() > 0.5 ? 'mp3-space' : 'mp3-space-new');
-        } else if (e.key.length === 1) {
-        // Play random key sound for regular keys
-        const randomKeySound = keysSounds[Math.floor(Math.random() * keysSounds.length)];
-        playSound(randomKeySound);
-        } else if (e.key === 'Backspace' && isAtStartOfParagraph(editorElement)) {
-        // Handle backspace at beginning of paragraph
-        const allParagraphs = document.querySelectorAll('.paragraph-editor');
-        if (allParagraphs.length > 1) {
-            const index = Array.from(allParagraphs).indexOf(editorElement);
-            if (index > 0) {
-            e.preventDefault();
-            
-            // Get previous paragraph
-            const prevParagraph = allParagraphs[index - 1];
-            const prevContent = prevParagraph.innerHTML;
-            const currentContent = editorElement.innerHTML;
-            
-            // Merge text with previous paragraph
-            prevParagraph.innerHTML = prevContent + currentContent;
-            
-            // Remove current paragraph
-            editorElement.parentElement.remove();
-            paragraphCount--;
-            
-            // Focus previous paragraph and set cursor at the end
-            prevParagraph.focus();
-            placeCursorAtEnd(prevParagraph);
-            
-            updateCounter();
-            }
-        }
-        }
-    }
     }
 
-    // Helper to check if cursor is at start of paragraph
-    function isAtStartOfParagraph(element) {
-    const selection = window.getSelection();
-    if (selection.rangeCount === 0) return false;
-    
-    const range = selection.getRangeAt(0);
-    
-    if (range.startContainer === element && range.startOffset === 0) {
-        return true;
-    }
-    
-    if (range.startContainer.nodeType === Node.TEXT_NODE) {
-        if (range.startOffset === 0) {
-        // Check if this is the first text node
-        let firstTextNode = null;
-        for (let node of element.childNodes) {
-            if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '') {
-            firstTextNode = node;
-            break;
-            }
-        }
-        return range.startContainer === firstTextNode;
-        }
-    }
-    
-    return false;
-    }
-
-    // Helper to place cursor at end of element
     function placeCursorAtEnd(element) {
     const range = document.createRange();
     const selection = window.getSelection();
@@ -358,7 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateCounter() {
     // Get all text from all paragraphs
-    const paragraphs = document.querySelectorAll('.paragraph-editor');
+    const paragraphs = document.querySelectorAll('p');
     const text = Array.from(paragraphs).map(p => p.textContent).join('\n');
     
     const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
@@ -368,13 +310,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getTitle() {
-    const firstParagraph = document.querySelector('.first-paragraph');
-    return firstParagraph ? firstParagraph.textContent.trim().substring(0, 50) || 'Untitled' : 'Untitled';
+    const firstP = editor.querySelector('p');
+    return firstP ? firstP.textContent.trim().substring(0, 50) || 'Untitled' : 'Untitled';
     }
 
     function getContent() {
-    const paragraphs = document.querySelectorAll('.paragraph-editor');
-    return Array.from(paragraphs).map(p => p.innerHTML).join('\n');
+    return editor.innerHTML;
     }
 
     function saveWriting() {
@@ -408,7 +349,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     localStorage.setItem('writings', JSON.stringify(writings));
-    localStorage.removeItem('draft'); // Clear draft after save
+    
+    // Save as draft as well to prevent content loss on refresh
+    localStorage.setItem('draft', JSON.stringify({
+        content: content,
+        timestamp: date
+    }));
+    
     alert('Writing saved!');
     }
     
@@ -425,7 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
     clearDocument();
     
     // Create first paragraph
-    createParagraph(true);
+    createParagraph('', true);
     
     // Reset current ID
     currentId = null;
@@ -434,7 +381,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function clearDocument() {
-    paragraphsContainer.innerHTML = '';
+    editor.innerHTML = '';
     paragraphCount = 0;
     }
 
@@ -454,26 +401,60 @@ document.addEventListener('DOMContentLoaded', () => {
     if (draftData) {
         const draft = JSON.parse(draftData);
         loadContent(draft.content);
+    } else {
+        // If no draft exists, create a new document with first paragraph
+        const p = document.createElement('p');
+        p.classList.add('first-paragraph');
+        p.dir = 'auto';
+        editor.appendChild(p);
     }
     }
     
     function loadContent(content) {
-    clearDocument();
-    
-    // Split content into paragraphs
-    const paragraphs = content.split('\n');
-    
-    // Create paragraph elements
-    paragraphs.forEach((text, index) => {
-        createParagraph(index === 0, text, false);
-    });
-    
-    // Focus first paragraph if no content
-    if (paragraphs.length === 0) {
-        createParagraph(true);
-    }
-    
-    updateCounter();
+        clearDocument();
+        
+        // Create a temporary div to parse the HTML content
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = content;
+        
+        // If there's no content, create an empty first paragraph
+        if (!tempDiv.innerHTML.trim()) {
+            const p = document.createElement('p');
+            p.classList.add('first-paragraph');
+            p.dir = 'auto';
+            editor.appendChild(p);
+            return;
+        }
+        
+        // Get all paragraphs from the content
+        const paragraphs = tempDiv.querySelectorAll('p');
+        
+        // If no paragraphs found, split by newlines and create paragraphs
+        if (paragraphs.length === 0) {
+            const lines = content.split('\n');
+            lines.forEach((line, index) => {
+                const p = document.createElement('p');
+                p.innerHTML = line;
+                p.dir = 'auto';
+                if (index === 0) {
+                    p.classList.add('first-paragraph');
+                }
+                editor.appendChild(p);
+            });
+        } else {
+            // If paragraphs exist, preserve their structure
+            paragraphs.forEach((p, index) => {
+                const newP = document.createElement('p');
+                newP.innerHTML = p.innerHTML;
+                newP.dir = 'auto';
+                if (index === 0) {
+                    newP.classList.add('first-paragraph');
+                }
+                editor.appendChild(newP);
+            });
+        }
+        
+        updateCounter();
     }
 
     function loadWriting(id) {
@@ -500,7 +481,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (currentId === id) {
         clearDocument();
-        createParagraph(true);
+        createParagraph('', true);
         currentId = null;
         updateCounter();
         }
@@ -649,7 +630,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Convert HTML to Markdown-like plain text
     let markdownContent = '';
-    const paragraphs = document.querySelectorAll('.paragraph-editor');
+    const paragraphs = document.querySelectorAll('p');
     
     paragraphs.forEach((p, index) => {
         // Create a deep clone to work with
@@ -837,12 +818,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Underline: __text__
                         text = text.replace(/__(.+?)__/g, '<u>$1</u>');
                         
-                        createParagraph(index === 0, text, index === paragraphs.length - 1);
+                        createParagraph(text, index === 0);
                     });
                     
                     // If no paragraphs were created, create an empty one
                     if (paragraphs.length === 0) {
-                        createParagraph(true);
+                        createParagraph('', true);
                     }
                     
                     updateCounter();

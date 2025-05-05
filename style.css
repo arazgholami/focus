@@ -76,38 +76,46 @@ p {
     min-height: 70vh;
 }
 
-.paragraph-editor {
+#editor {
     width: 100%;
-    margin-bottom: 0;
+    max-width: 800px;
+    min-height: 70vh;
     font-size: 18px;
     line-height: 1.6;
     background: transparent;
     border: none;
-    resize: none;
     outline: none;
     color: var(--text-color);
     transition: color 0.3s;
-    overflow: hidden;
     padding: 5px;
+}
+
+#editor p {
+    margin-bottom: 0.5rem;
     min-height: 24px;
 }
 
-/* Make contenteditable div function more like a textarea */
-[contenteditable="true"].paragraph-editor {
-    white-space: pre-wrap;
-    overflow-wrap: break-word;
-}
-
-Remove default outline but add subtle indication when focused
-[contenteditable="true"].paragraph-editor:focus {
-    outline: none;
-    box-shadow: 0 0 0 1px rgba(0,0,0,0.05);
-    background-color: rgba(0,0,0,0.01);
-}
-
-.first-paragraph {
+#editor p:first-child {
     font-weight: bold;
     font-size: 26px !important;
+}
+
+#editor p:empty:before {
+    content: attr(data-placeholder);
+    color: #aaa;
+}
+
+#editor p:first-child:empty:before {
+    content: 'Start writing...';
+}
+
+/* Remove old paragraph styles */
+.paragraph-editor {
+    display: none;
+}
+
+.paragraph-wrapper {
+    display: none;
 }
 
 #toolbar {
@@ -356,12 +364,6 @@ Remove default outline but add subtle indication when focused
     .status-right {
         gap: 8px;
     }
-}
-
-/* Placeholder effect */
-.paragraph-editor:empty:before {
-    content: attr(data-placeholder);
-    color: #aaa;
 }
 
 /* Format popup */
