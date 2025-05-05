@@ -10,7 +10,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const listBtn = document.getElementById('list-btn');
     const themeBtn = document.getElementById('theme-btn');
     const soundBtn = document.getElementById('sound-btn');
+    const loadBtn = document.getElementById('load-btn');
     const downloadBtn = document.getElementById('download-btn');
+    const downloadAllBtn = document.getElementById('download-all-btn');
     const writingsModal = document.getElementById('writings-modal');
     const writingsList = document.getElementById('writings-list');
     const closeModal = document.querySelector('.close-modal');
@@ -80,7 +82,9 @@ document.addEventListener('DOMContentLoaded', () => {
     listBtn.addEventListener('click', openWritingsList);
     themeBtn.addEventListener('click', toggleTheme);
     soundBtn.addEventListener('click', toggleSound);
+    loadBtn.addEventListener('click', loadMarkdownFile);
     downloadBtn.addEventListener('click', downloadAsMarkdown);
+    downloadAllBtn.addEventListener('click', downloadAllWritings);
     closeModal.addEventListener('click', closeModalHandler);
     window.addEventListener('click', (e) => {
         if (e.target === writingsModal) closeModalHandler();
@@ -598,6 +602,43 @@ document.addEventListener('DOMContentLoaded', () => {
             : '<i class="fas fa-volume-mute"></i>';
     }
 
+    // Process node for Markdown conversion
+    function processNode(node) {
+        if (node.nodeType === Node.TEXT_NODE) {
+            return node.textContent;
+        }
+        
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            let result = '';
+            let prefix = '';
+            let suffix = '';
+            
+            // Determine formatting based on node type or style
+            if (node.nodeName === 'STRONG' || node.nodeName === 'B' || 
+                (node.style && node.style.fontWeight === 'bold')) {
+                prefix = '**';
+                suffix = '**';
+            } else if (node.nodeName === 'EM' || node.nodeName === 'I' || 
+                        (node.style && node.style.fontStyle === 'italic')) {
+                prefix = '_';
+                suffix = '_';
+            } else if (node.nodeName === 'U' || 
+                        (node.style && node.style.textDecoration === 'underline')) {
+                prefix = '__';
+                suffix = '__';
+            }
+            
+            // Process all child nodes
+            for (const child of node.childNodes) {
+                result += processNode(child);
+            }
+            
+            return prefix + result + suffix;
+        }
+        
+        return '';
+    }
+
     function downloadAsMarkdown() {
     const content = getContent();
 
@@ -614,43 +655,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Create a deep clone to work with
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = p.innerHTML;
-        
-        // Process all formatting recursively
-        function processNode(node) {
-        if (node.nodeType === Node.TEXT_NODE) {
-            return node.textContent;
-        }
-        
-        if (node.nodeType === Node.ELEMENT_NODE) {
-            let result = '';
-            let prefix = '';
-            let suffix = '';
-            
-            // Determine formatting based on node type or style
-            if (node.nodeName === 'STRONG' || node.nodeName === 'B' || 
-                (node.style && node.style.fontWeight === 'bold')) {
-            prefix = '**';
-            suffix = '**';
-            } else if (node.nodeName === 'EM' || node.nodeName === 'I' || 
-                        (node.style && node.style.fontStyle === 'italic')) {
-            prefix = '_';
-            suffix = '_';
-            } else if (node.nodeName === 'U' || 
-                        (node.style && node.style.textDecoration === 'underline')) {
-            prefix = '__';
-            suffix = '__';
-            }
-            
-            // Process all child nodes
-            for (const child of node.childNodes) {
-            result += processNode(child);
-            }
-            
-            return prefix + result + suffix;
-        }
-        
-        return '';
-        }
         
         // Process the paragraph content
         const processedText = processNode(tempDiv);
@@ -780,5 +784,122 @@ document.addEventListener('DOMContentLoaded', () => {
     updateCounter();
     clearTimeout(typingTimeout);
     typingTimeout = setTimeout(autoSaveDraft, 2000);
+    }
+
+    function loadMarkdownFile() {
+        // Create a hidden file input element
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = '.md';
+        fileInput.style.display = 'none';
+        document.body.appendChild(fileInput);
+        
+        // Trigger click to open file dialog
+        fileInput.click();
+        
+        // Handle file selection
+        fileInput.addEventListener('change', function() {
+            if (fileInput.files && fileInput.files[0]) {
+                const file = fileInput.files[0];
+                
+                // Check if it's an MD file
+                if (!file.name.toLowerCase().endsWith('.md')) {
+                    alert('Please select a Markdown (.md) file');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const content = e.target.result;
+                    
+                    // Confirm if the user wants to replace current content
+                    if (getContent().trim() && !confirm('Do you want to replace the current content?')) {
+                        return;
+                    }
+                    
+                    // Clear current document and load markdown content
+                    clearDocument();
+                    
+                    // Split by double newlines to get paragraphs
+                    const paragraphs = content.split(/\n\n+/);
+                    
+                    // Create paragraphs for each section
+                    paragraphs.forEach((text, index) => {
+                        // Convert markdown formatting to HTML
+                        // Bold: **text** or __text__
+                        text = text.replace(/(\*\*|__)(.+?)\1/g, '<strong>$2</strong>');
+                        // Italic: *text* or _text_
+                        text = text.replace(/(\*|_)([^\*_]+)\1/g, '<em>$2</em>');
+                        // Underline: __text__
+                        text = text.replace(/__(.+?)__/g, '<u>$1</u>');
+                        
+                        createParagraph(index === 0, text, index === paragraphs.length - 1);
+                    });
+                    
+                    // If no paragraphs were created, create an empty one
+                    if (paragraphs.length === 0) {
+                        createParagraph(true);
+                    }
+                    
+                    updateCounter();
+                };
+                reader.readAsText(file);
+            }
+            
+            // Remove the file input
+            document.body.removeChild(fileInput);
+        });
+    }
+
+    function downloadAllWritings() {
+        const writings = JSON.parse(localStorage.getItem('writings') || '[]');
+        
+        if (writings.length === 0) {
+            alert('No writings to download.');
+            return;
+        }
+        
+        // Create a zip file
+        const zip = new JSZip();
+        const folder = zip.folder("focus-writings");
+        
+        // Add each writing as a separate markdown file
+        writings.forEach(writing => {
+            // Convert HTML content to markdown
+            let markdownContent = '';
+            
+            // Split content by paragraphs
+            const paragraphs = writing.content.split('\n');
+            
+            paragraphs.forEach(paragraphHTML => {
+                // Create a temporary div to hold the HTML
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = paragraphHTML;
+                
+                // Process the paragraph content
+                const processedText = processNode(tempDiv);
+                markdownContent += processedText + '\n\n';
+            });
+            
+            // Get title from the writing
+            const title = writing.title.replace(/[^\w\s]/gi, '').replace(/\s+/g, '-').toLowerCase() || writing.title;
+            const dateStr = new Date(writing.updatedAt).toISOString().split('T')[0];
+            
+            // Add to zip
+            folder.file(`${dateStr}-${title}.md`, markdownContent);
+        });
+        
+        // Generate and download the zip file
+        zip.generateAsync({type:"blob"})
+            .then(function(content) {
+                // Create download link and trigger click
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(content);
+                a.download = "focus-writings.zip";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(a.href);
+            });
     }
 });

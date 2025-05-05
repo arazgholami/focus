@@ -17,6 +17,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link rel="manifest" href="./manifest.json">
   <link rel="stylesheet" href="./style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
   <audio src="sounds/key-01.mp3" id="mp3-key-01"></audio>
@@ -43,6 +44,7 @@
     <button id="list-btn" title="Your Writings"><i class="fas fa-list"></i></button>
     <button id="theme-btn" title="Toggle Dark Mode"><i class="fas fa-moon"></i></button>
     <button id="sound-btn" title="Toggle Sounds"><i class="fas fa-volume-up"></i></button>
+    <button id="load-btn" title="Load MD File"><i class="fas fa-file-upload"></i></button>
     <button id="download-btn" title="Download as MD"><i class="fas fa-download"></i></button>
   </div>
 
@@ -68,6 +70,9 @@
   <div id="writings-modal" class="modal">
     <div class="modal-content">
       <span class="close-modal">&times;</span>
+      <div class="writings-header">
+        <button id="download-all-btn" class="action-btn"><i class="fas fa-download"></i> Download All</button>
+      </div>
       <ul class="writings-list" id="writings-list"></ul>
     </div>
   </div>

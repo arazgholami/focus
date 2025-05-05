@@ -257,6 +257,16 @@ Remove default outline but add subtle indication when focused
     transition: background-color 0.3s, color 0.3s;
 }
 
+.writings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.writings-header h3 {
+    margin: 0;
+}
+
 .writings-list {
     list-style: none;
     padding: 0;
