@@ -134,132 +134,210 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleEditorInput(e) {
-    // Ensure each line is wrapped in a paragraph
-    const selection = window.getSelection();
-    const range = selection.getRangeAt(0);
-    const currentP = range.startContainer.closest('p');
-    
-    if (!currentP) {
-        // If cursor is not in a paragraph, wrap the content in a paragraph
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = editor.innerHTML;
-        editor.innerHTML = '';
+        // Ensure each line is wrapped in a paragraph
+        const selection = window.getSelection();
+        const range = selection.getRangeAt(0);
+        const currentP = range.startContainer.nodeType === Node.TEXT_NODE 
+            ? range.startContainer.parentElement 
+            : range.startContainer;
         
-        Array.from(tempDiv.childNodes).forEach(node => {
-            if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
-                const p = document.createElement('p');
-                p.textContent = node.textContent;
-                p.dir = 'auto';
-                editor.appendChild(p);
-            } else if (node.nodeType === Node.ELEMENT_NODE) {
-                if (node.tagName === 'P') {
-                    editor.appendChild(node);
-                } else {
+        if (!currentP || currentP.tagName !== 'P') {
+            // If cursor is not in a paragraph, wrap the content in a paragraph
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = editor.innerHTML;
+            editor.innerHTML = '';
+            
+            Array.from(tempDiv.childNodes).forEach(node => {
+                if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
                     const p = document.createElement('p');
+                    p.textContent = node.textContent;
                     p.dir = 'auto';
-                    p.appendChild(node);
                     editor.appendChild(p);
+                } else if (node.nodeType === Node.ELEMENT_NODE) {
+                    if (node.tagName === 'P') {
+                        editor.appendChild(node);
+                    } else {
+                        const p = document.createElement('p');
+                        p.dir = 'auto';
+                        p.appendChild(node);
+                        editor.appendChild(p);
+                    }
                 }
+            });
+        }
+        
+        // Remove any &nbsp; that might have been inserted
+        const paragraphs = editor.querySelectorAll('p');
+        paragraphs.forEach(p => {
+            if (p.innerHTML === '&nbsp;') {
+                p.innerHTML = '';
             }
         });
     }
-    }
 
     function handleKeydown(e) {
-        if (isSoundEnabled) {
-            if (e.key === 'Enter') {
-                if (!e.shiftKey) {
-                    e.preventDefault();
-                    playSound(Math.random() > 0.5 ? 'mp3-return' : 'mp3-return-new');
+        if (e.key === 'Enter') {
+            if (!e.shiftKey) {
+                e.preventDefault();
+                playSound(Math.random() > 0.5 ? 'mp3-return' : 'mp3-return-new');
+                
+                const selection = window.getSelection();
+                const range = selection.getRangeAt(0);
+                
+                // Find the containing paragraph regardless of how nested the selection is
+                let currentP = range.startContainer;
+                while (currentP && currentP.nodeName !== 'P') {
+                    currentP = currentP.parentNode;
+                }
+                
+                if (currentP) {
+                    // Create a new paragraph
+                    const newP = document.createElement('p');
+                    newP.dir = 'auto';
                     
-                    // Create new paragraph
-                    const selection = window.getSelection();
-                    const range = selection.getRangeAt(0);
-                    const currentP = range.startContainer.nodeType === Node.TEXT_NODE 
-                        ? range.startContainer.parentElement 
-                        : range.startContainer;
+                    // Create a range that selects everything after the cursor
+                    const afterCursorRange = range.cloneRange();
+                    afterCursorRange.setStart(range.startContainer, range.startOffset);
+                    afterCursorRange.setEndAfter(currentP.lastChild);
                     
-                    if (currentP && currentP.tagName === 'P') {
-                        // Create a temporary div to handle HTML content
-                        const tempDiv = document.createElement('div');
-                        tempDiv.innerHTML = currentP.innerHTML;
+                    // Extract content after cursor
+                    const afterCursorFragment = afterCursorRange.extractContents();
+                    
+                    // If cursor is at the start of paragraph, insert new paragraph before
+                    if (range.startOffset === 0 && 
+                        range.startContainer === currentP.firstChild && 
+                        !currentP.previousSibling) {
+                        currentP.parentNode.insertBefore(newP, currentP);
+                    } else {
+                        // Add extracted content to new paragraph
+                        newP.appendChild(afterCursorFragment);
                         
-                        // Split content at cursor position
-                        const beforeCursor = tempDiv.innerHTML.substring(0, range.startOffset);
-                        const afterCursor = tempDiv.innerHTML.substring(range.startOffset);
+                        // If new paragraph is empty, add an empty text node
+                        if (!newP.hasChildNodes()) {
+                            newP.appendChild(document.createTextNode(''));
+                        }
                         
-                        // Update current paragraph
-                        currentP.innerHTML = beforeCursor;
-                        
-                        // Create new paragraph with content after cursor
-                        const newP = document.createElement('p');
-                        newP.innerHTML = afterCursor;
-                        newP.dir = 'auto';
-                        
-                        // Insert the new paragraph after the current one
+                        // Insert new paragraph after current one
                         currentP.parentNode.insertBefore(newP, currentP.nextSibling);
                         
-                        // Set cursor position at the start of the new paragraph
-                        const newRange = document.createRange();
-                        const newSelection = window.getSelection();
+                        // Clean up any empty text nodes in current paragraph
+                        Array.from(currentP.childNodes).forEach(node => {
+                            if (node.nodeType === Node.TEXT_NODE && node.textContent === '') {
+                                currentP.removeChild(node);
+                            }
+                        });
                         
-                        // If the new paragraph has content, place cursor at start of first text node
-                        if (newP.firstChild) {
-                            newRange.setStart(newP.firstChild, 0);
-                        } else {
-                            newRange.setStart(newP, 0);
+                        // If current paragraph is now empty, add empty text node
+                        if (!currentP.hasChildNodes()) {
+                            currentP.appendChild(document.createTextNode(''));
                         }
-                        newRange.collapse(true);
-                        newSelection.removeAllRanges();
-                        newSelection.addRange(newRange);
-                        
-                        // Focus new paragraph
-                        newP.focus();
                     }
+                    
+                    // Set cursor position at the start of the new paragraph
+                    const newRange = document.createRange();
+                    if (newP.firstChild) {
+                        newRange.setStart(newP.firstChild, 0);
+                    } else {
+                        const textNode = document.createTextNode('');
+                        newP.appendChild(textNode);
+                        newRange.setStart(textNode, 0);
+                    }
+                    newRange.collapse(true);
+                    
+                    selection.removeAllRanges();
+                    selection.addRange(newRange);
                     
                     updateCounter();
                     return;
                 }
-            } else if (e.key === ' ') {
-                playSound(Math.random() > 0.5 ? 'mp3-space' : 'mp3-space-new');
-            } else if (e.key.length === 1) {
-                const randomKeySound = keysSounds[Math.floor(Math.random() * keysSounds.length)];
-                playSound(randomKeySound);
-            } else if (e.key === 'Backspace') {
-                const selection = window.getSelection();
-                const range = selection.getRangeAt(0);
-                const currentP = range.startContainer.nodeType === Node.TEXT_NODE 
-                    ? range.startContainer.parentElement 
-                    : range.startContainer;
+            }
+        } else if (e.key === ' ') {
+            playSound(Math.random() > 0.5 ? 'mp3-space' : 'mp3-space-new');
+        } else if (e.key.length === 1) {
+            const randomKeySound = keysSounds[Math.floor(Math.random() * keysSounds.length)];
+            playSound(randomKeySound);
+        } else if (e.key === 'Backspace') {
+            const selection = window.getSelection();
+            const range = selection.getRangeAt(0);
+            
+            // Handle case when cursor is at the beginning of a paragraph
+            if (range.collapsed && range.startOffset === 0) {
+                // Find the containing paragraph
+                let currentP = range.startContainer;
+                while (currentP && currentP.nodeName !== 'P') {
+                    currentP = currentP.parentNode;
+                }
                 
-                if (currentP && currentP.tagName === 'P' && range.startOffset === 0 && currentP.previousElementSibling) {
+                if (currentP && currentP.previousElementSibling && currentP.previousElementSibling.nodeName === 'P') {
                     e.preventDefault();
                     
-                    // Create a temporary div to handle HTML content
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = currentP.previousElementSibling.innerHTML + currentP.innerHTML;
+                    const prevP = currentP.previousElementSibling;
                     
-                    // Merge with previous paragraph
-                    currentP.previousElementSibling.innerHTML = tempDiv.innerHTML;
-                    currentP.remove();
+                    // Save previous paragraph contents (may have formatting)
+                    const prevContent = prevP.innerHTML;
                     
-                    // Focus previous paragraph and set cursor at the end
-                    currentP.previousElementSibling.focus();
-                    placeCursorAtEnd(currentP.previousElementSibling);
+                    // Get current paragraph contents
+                    const currentContent = currentP.innerHTML;
+                    
+                    // Merge contents
+                    prevP.innerHTML = prevContent + currentContent;
+                    
+                    // Remove the current paragraph
+                    currentP.parentNode.removeChild(currentP);
+                    
+                    // Set cursor at the merger point
+                    placeCursorAtPosition(prevP, prevContent.length);
                     
                     updateCounter();
+                    return;
                 }
+            }
+        }
+        
+        // Handle keyboard shortcuts for formatting
+        if (e.ctrlKey) {
+            if (e.key === 'b') {
+                e.preventDefault();
+                document.execCommand('bold', false, null);
+            } else if (e.key === 'i') {
+                e.preventDefault();
+                document.execCommand('italic', false, null);
+            } else if (e.key === 'u') {
+                e.preventDefault();
+                document.execCommand('underline', false, null);
             }
         }
     }
 
     function placeCursorAtEnd(element) {
-    const range = document.createRange();
-    const selection = window.getSelection();
-    range.selectNodeContents(element);
-    range.collapse(false); // false = collapse to end
-    selection.removeAllRanges();
-    selection.addRange(range);
+        const range = document.createRange();
+        const selection = window.getSelection();
+        
+        // If the element has no children, set cursor at the end of the element
+        if (!element.firstChild) {
+            range.setStart(element, 0);
+            range.setEnd(element, 0);
+        } else {
+            // Find the last text node
+            let lastNode = element;
+            while (lastNode.lastChild) {
+                lastNode = lastNode.lastChild;
+            }
+            
+            // If the last node is a text node, set cursor at its end
+            if (lastNode.nodeType === Node.TEXT_NODE) {
+                range.setStart(lastNode, lastNode.length);
+                range.setEnd(lastNode, lastNode.length);
+            } else {
+                // Otherwise set cursor at the end of the element
+                range.setStart(element, element.childNodes.length);
+                range.setEnd(element, element.childNodes.length);
+            }
+        }
+        
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
     }
 
     function handleScroll(e) {
@@ -747,6 +825,27 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (!selection || selection.isCollapsed) return;
         
+        // Get the current range
+        const range = selection.getRangeAt(0);
+        
+        // Create and insert marker elements
+        const startMarker = document.createElement('span');
+        startMarker.id = 'format-start-marker';
+        startMarker.style.display = 'inline';
+        
+        const endMarker = document.createElement('span');
+        endMarker.id = 'format-end-marker';
+        endMarker.style.display = 'inline';
+        
+        // Insert markers at the start and end of selection
+        const startRange = range.cloneRange();
+        startRange.collapse(true); // Collapse to start
+        startRange.insertNode(startMarker);
+        
+        const endRange = range.cloneRange();
+        endRange.collapse(false); // Collapse to end
+        endRange.insertNode(endMarker);
+        
         // Apply formatting using document.execCommand
         document.execCommand('styleWithCSS', false, true);
         
@@ -760,6 +859,25 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'underline':
                 document.execCommand('underline', false, null);
                 break;
+        }
+        
+        // Find markers in the DOM after formatting
+        const updatedStartMarker = document.getElementById('format-start-marker');
+        const updatedEndMarker = document.getElementById('format-end-marker');
+        
+        if (updatedStartMarker && updatedEndMarker) {
+            // Create a new range between the markers
+            const newRange = document.createRange();
+            newRange.setStartAfter(updatedStartMarker);
+            newRange.setEndBefore(updatedEndMarker);
+            
+            // Remove markers
+            updatedStartMarker.parentNode.removeChild(updatedStartMarker);
+            updatedEndMarker.parentNode.removeChild(updatedEndMarker);
+            
+            // Apply the new range to restore selection
+            selection.removeAllRanges();
+            selection.addRange(newRange);
         }
         
         // Hide popup
@@ -886,5 +1004,72 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.body.removeChild(a);
                 URL.revokeObjectURL(a.href);
             });
+    }
+
+    function placeCursorAtPosition(element, position) {
+        const range = document.createRange();
+        const selection = window.getSelection();
+        
+        // Function to find the position in a node with mixed content (text and elements)
+        function findPositionInMixedContent(node, targetPos) {
+            let currentPos = 0;
+            
+            for (let i = 0; i < node.childNodes.length; i++) {
+                const child = node.childNodes[i];
+                
+                if (child.nodeType === Node.TEXT_NODE) {
+                    const textLength = child.textContent.length;
+                    if (currentPos + textLength >= targetPos) {
+                        return {
+                            node: child,
+                            offset: targetPos - currentPos
+                        };
+                    }
+                    currentPos += textLength;
+                } else if (child.nodeType === Node.ELEMENT_NODE) {
+                    // Get the text length of this element
+                    const textLength = child.textContent.length;
+                    
+                    if (currentPos + textLength >= targetPos) {
+                        // Position is within this element
+                        return findPositionInMixedContent(child, targetPos - currentPos);
+                    }
+                    
+                    currentPos += textLength;
+                }
+            }
+            
+            // If we reach here, position is at the end
+            const lastChild = node.lastChild;
+            if (lastChild) {
+                if (lastChild.nodeType === Node.TEXT_NODE) {
+                    return {
+                        node: lastChild,
+                        offset: lastChild.textContent.length
+                    };
+                } else {
+                    return findPositionInMixedContent(lastChild, lastChild.textContent.length);
+                }
+            }
+            
+            // Fallback: just put cursor at the end of the element
+            return {
+                node: node,
+                offset: node.childNodes.length
+            };
+        }
+        
+        const pos = findPositionInMixedContent(element, position);
+        
+        try {
+            range.setStart(pos.node, pos.offset);
+            range.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(range);
+        } catch (e) {
+            console.error("Error setting cursor position:", e);
+            // Fallback: place cursor at end
+            placeCursorAtEnd(element);
+        }
     }
 });
