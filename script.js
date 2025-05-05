@@ -662,7 +662,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Get title from the first paragraph
-    const title = getTitle().replace(/[^\w\s]/gi, '').replace(/\s+/g, '-').toLowerCase() || 'untitled';
+    const title = getTitle().toLowerCase() || 'untitled';
 
     // Create blob with content
     const blob = new Blob([markdownContent], { type: 'text/markdown' });
@@ -685,22 +685,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const underlineBtn = document.getElementById('format-underline');
     
     let currentSelection = null;
-    let currentTextarea = null;
 
     // Add event listeners for text selection
-    document.addEventListener('mouseup', showFormatPopup);
+    document.addEventListener('mouseup', handleTextSelection);
     document.addEventListener('keyup', (e) => {
-    // Show popup on arrow keys or Shift+arrows to allow keyboard selection
-    if (e.key.includes('Arrow') || e.key.includes('Shift')) {
-        showFormatPopup(e);
-    }
+        // Show popup on arrow keys or Shift+arrows to allow keyboard selection
+        if (e.key.includes('Arrow') || e.key.includes('Shift')) {
+            handleTextSelection(e);
+        }
     });
 
     // Hide popup when clicking outside
     document.addEventListener('mousedown', (e) => {
-    if (!formatPopup.contains(e.target)) {
-        formatPopup.style.display = 'none';
-    }
+        if (!formatPopup.contains(e.target)) {
+            formatPopup.style.display = 'none';
+            currentSelection = null;
+        }
     });
 
     // Format buttons event listeners
@@ -708,82 +708,86 @@ document.addEventListener('DOMContentLoaded', () => {
     italicBtn.addEventListener('click', () => applyFormat('italic'));
     underlineBtn.addEventListener('click', () => applyFormat('underline'));
 
-    function showFormatPopup(e) {
-    // Find the active editor element
-    if (e.target && e.target.classList && e.target.classList.contains('paragraph-editor')) {
+    // Add undo/redo keyboard handlers
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.key === 'z') {
+            e.preventDefault();
+            document.execCommand('undo', false, null);
+        } else if (e.ctrlKey && e.key === 'y') {
+            e.preventDefault();
+            document.execCommand('redo', false, null);
+        }
+    });
+
+    function handleTextSelection(e) {
         const selection = window.getSelection();
         
-        // Only show popup if text is selected
         if (selection && !selection.isCollapsed) {
-        const range = selection.getRangeAt(0);
-        currentTextarea = e.target;
-        
-        // Get the selection coordinates
-        const selectionRect = range.getBoundingClientRect();
-        
-        // Calculate popup dimensions
-        const popupWidth = 120; // Estimated width of popup
-        const popupHeight = 42; // Estimated height of popup
-        
-        // Calculate position ensuring it stays in viewport
-        let left = selectionRect.left + (selectionRect.width / 2) - (popupWidth / 2);
-        let top = selectionRect.top - popupHeight - 5; // 5px spacing
-        
-        // Check if popup would go outside viewport boundaries
-        if (left + popupWidth > window.innerWidth) {
-            left = window.innerWidth - popupWidth - 10; // Keep 10px margin
-        }
-        if (left < 10) {
-            left = 10; // Keep 10px margin from left
-        }
-        if (top < 10) {
-            // If not enough space above, show below
-            top = selectionRect.bottom + 5; // Position below text
-        }
-        
-        // Position popup
-        formatPopup.style.left = left + 'px';
-        formatPopup.style.top = top + 'px';
-        formatPopup.style.display = 'flex';
-        
-        e.stopPropagation();
+            // Store the current selection for later use
+            currentSelection = selection;
+            
+            const range = selection.getRangeAt(0);
+            const selectionRect = range.getBoundingClientRect();
+            
+            // Calculate popup dimensions
+            const popupWidth = 120; 
+            const popupHeight = 42; 
+            
+            // Calculate position ensuring it stays in viewport
+            let left = selectionRect.left + (selectionRect.width / 2) - (popupWidth / 2);
+            let top = selectionRect.top - popupHeight - 5;
+            
+            // Check if popup would go outside viewport boundaries
+            if (left + popupWidth > window.innerWidth) {
+                left = window.innerWidth - popupWidth - 10;
+            }
+            if (left < 10) {
+                left = 10;
+            }
+            if (top < 10) {
+                top = selectionRect.bottom + 5;
+            }
+            
+            // Position popup
+            formatPopup.style.left = left + 'px';
+            formatPopup.style.top = top + 'px';
+            formatPopup.style.display = 'flex';
+            
+            if (e) e.stopPropagation();
         } else {
-        formatPopup.style.display = 'none';
+            formatPopup.style.display = 'none';
+            currentSelection = null;
         }
-    } else {
-        formatPopup.style.display = 'none';
-    }
     }
 
     function applyFormat(format) {
-    const selection = window.getSelection();
-    if (!selection) return;
-    
-    // If no text is selected, don't do anything for keyboard shortcuts
-    if (selection.isCollapsed && !currentTextarea) return;
-    
-    // Apply formatting using document.execCommand
-    document.execCommand('styleWithCSS', false, true);
-    
-    switch (format) {
-        case 'bold':
-        document.execCommand('bold', false, null);
-        break;
-        case 'italic':
-        document.execCommand('italic', false, null);
-        break;
-        case 'underline':
-        document.execCommand('underline', false, null);
-        break;
-    }
-    
-    // Hide popup if it's visible
-    formatPopup.style.display = 'none';
-    
-    // Update counter and autosave
-    updateCounter();
-    clearTimeout(typingTimeout);
-    typingTimeout = setTimeout(autoSaveDraft, 2000);
+        // Use the stored selection if available
+        const selection = currentSelection || window.getSelection();
+        
+        if (!selection || selection.isCollapsed) return;
+        
+        // Apply formatting using document.execCommand
+        document.execCommand('styleWithCSS', false, true);
+        
+        switch (format) {
+            case 'bold':
+                document.execCommand('bold', false, null);
+                break;
+            case 'italic':
+                document.execCommand('italic', false, null);
+                break;
+            case 'underline':
+                document.execCommand('underline', false, null);
+                break;
+        }
+        
+        // Hide popup
+        formatPopup.style.display = 'none';
+        
+        // Update counter and autosave
+        updateCounter();
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(autoSaveDraft, 2000);
     }
 
     function loadMarkdownFile() {

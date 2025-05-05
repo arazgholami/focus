@@ -200,6 +200,18 @@ Remove default outline but add subtle indication when focused
     border-radius: 4px;
 }
 
+.logo-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: var(--toolbar-color);
+}
+
+.logo-link span {
+    font-weight: 500;
+}
+
 .status-link {
     color: var(--toolbar-color);
     text-decoration: none;
@@ -330,7 +342,20 @@ Remove default outline but add subtle indication when focused
 
 @media (max-width: 768px) {
     #toolbar {
-    left: 10px;
+        left: 10px;
+    }
+    
+    .status-link, #counter {
+        display: none;
+    }
+    
+    .formatting-shortcuts {
+        display: flex;
+        margin-left: 0;
+    }
+    
+    .status-right {
+        gap: 8px;
     }
 }
 
