@@ -769,12 +769,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Add undo/redo keyboard handlers
     document.addEventListener('keydown', (e) => {
-        if (e.ctrlKey && e.key === 'z') {
-            e.preventDefault();
-            document.execCommand('undo', false, null);
-        } else if (e.ctrlKey && e.key === 'y') {
-            e.preventDefault();
-            document.execCommand('redo', false, null);
+        if (e.ctrlKey || e.metaKey) { // metaKey for Mac support
+            if (e.key === 'z') {
+                e.preventDefault();
+                if (e.shiftKey) {
+                    // Redo (Ctrl+Shift+Z or Cmd+Shift+Z)
+                    document.execCommand('redo', false, null);
+                } else {
+                    // Undo (Ctrl+Z or Cmd+Z)
+                    document.execCommand('undo', false, null);
+                }
+                // Update counter after undo/redo
+                updateCounter();
+                clearTimeout(typingTimeout);
+                typingTimeout = setTimeout(autoSaveDraft, 2000);
+            } else if (e.key === 'y') {
+                // Alternative redo shortcut (Ctrl+Y or Cmd+Y)
+                e.preventDefault();
+                document.execCommand('redo', false, null);
+                updateCounter();
+                clearTimeout(typingTimeout);
+                typingTimeout = setTimeout(autoSaveDraft, 2000);
+            }
         }
     });
 
@@ -866,16 +882,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const updatedEndMarker = document.getElementById('format-end-marker');
         
         if (updatedStartMarker && updatedEndMarker) {
-            // Create a new range between the markers
+            // Create a new range that starts after the end marker
             const newRange = document.createRange();
-            newRange.setStartAfter(updatedStartMarker);
-            newRange.setEndBefore(updatedEndMarker);
+            newRange.setStartAfter(updatedEndMarker);
+            newRange.collapse(true);
             
             // Remove markers
             updatedStartMarker.parentNode.removeChild(updatedStartMarker);
             updatedEndMarker.parentNode.removeChild(updatedEndMarker);
             
-            // Apply the new range to restore selection
+            // Apply the new range to place cursor after formatted text
             selection.removeAllRanges();
             selection.addRange(newRange);
         }
