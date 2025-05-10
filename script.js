@@ -107,6 +107,15 @@ function setupEventListeners() {
     }, 100);
   });
   
+  // Add click handler for links to make them Ctrl+Click openable
+  editor.addEventListener('click', (e) => {
+    // Check if the click is on a link and Ctrl/Cmd key is pressed
+    if ((e.ctrlKey || e.metaKey) && e.target.tagName === 'A') {
+      e.preventDefault();
+      window.open(e.target.href, '_blank');
+    }
+  });
+  
   // Toolbar button events
   document.getElementById('fullscreen-btn').addEventListener('click', toggleFullscreen);
   document.getElementById('list-btn').addEventListener('click', toggleDocumentsList);
@@ -128,6 +137,8 @@ function setupEventListeners() {
   document.getElementById('format-h3').addEventListener('click', () => formatText('h3'));
   document.getElementById('format-quote').addEventListener('click', () => formatText('blockquote'));
   document.getElementById('format-link').addEventListener('click', () => formatText('link'));
+  document.getElementById('format-image').addEventListener('click', () => formatText('image'));
+  document.getElementById('format-unlink').addEventListener('click', () => formatText('unlink'));
   
   // List popup events
   document.getElementById('close-list').addEventListener('click', () => listPopup.classList.add('hidden'));
@@ -233,53 +244,101 @@ function handleTextSelection() {
 
 // Handle double click to show formatting popup
 function handleDoubleClick(e) {
-  if (e.target === editor || editor.contains(e.target)) {
-    const selection = window.getSelection();
-    if (selection.toString().trim().length > 0) {
-      handleTextSelection();
+  const selection = window.getSelection();
+  
+  // If there's text selected, show the formatting popup
+  if (selection.toString().trim().length > 0) {
+    formattingPopup.classList.remove('hidden');
+    checkActiveFormattingStyles();
+    positionFormattingPopup();
+    return;
+  } 
+  
+  // Handle double-click on empty areas or between paragraphs
+  if (e.target === editor || 
+      (e.target.tagName === 'P' && e.target.textContent.trim() === '') ||
+      (e.target === document.body && editor.contains(selection.anchorNode))) {
+    
+    // Position cursor at the double-click position
+    const range = document.caretRangeFromPoint(e.clientX, e.clientY);
+    if (range) {
+      selection.removeAllRanges();
+      selection.addRange(range);
     }
+    
+    formattingPopup.classList.remove('hidden');
+    checkActiveFormattingStyles();
+    positionFormattingPopup();
   }
 }
 
 // Check for active formatting styles in the current selection
 function checkActiveFormattingStyles() {
+  const boldButton = document.getElementById('format-bold');
+  const italicButton = document.getElementById('format-italic');
+  const underlineButton = document.getElementById('format-underline');
+  const h1Button = document.getElementById('format-h1');
+  const h2Button = document.getElementById('format-h2');
+  const h3Button = document.getElementById('format-h3');
+  const quoteButton = document.getElementById('format-quote');
+  const linkButton = document.getElementById('format-link');
+  const unlinkButton = document.getElementById('format-unlink');
+  
   // Reset all buttons
-  document.querySelectorAll('#formatting-popup button').forEach(btn => {
-    btn.classList.remove('active');
-  });
+  boldButton.classList.remove('active');
+  italicButton.classList.remove('active');
+  underlineButton.classList.remove('active');
+  h1Button.classList.remove('active');
+  h2Button.classList.remove('active');
+  h3Button.classList.remove('active');
+  quoteButton.classList.remove('active');
+  linkButton.classList.remove('active');
   
-  // Check for bold
+  // Hide unlink button by default
+  if (unlinkButton) {
+    unlinkButton.style.display = 'none';
+  }
+  
+  // Check for active styles
   if (document.queryCommandState('bold')) {
-    document.getElementById('format-bold').classList.add('active');
+    boldButton.classList.add('active');
   }
   
-  // Check for italic
   if (document.queryCommandState('italic')) {
-    document.getElementById('format-italic').classList.add('active');
+    italicButton.classList.add('active');
   }
   
-  // Check for underline
   if (document.queryCommandState('underline')) {
-    document.getElementById('format-underline').classList.add('active');
+    underlineButton.classList.add('active');
   }
   
-  // Check for headings and blockquote
-  const parentNode = window.getSelection().anchorNode.parentNode;
-  const parentTagName = parentNode.tagName ? parentNode.tagName.toLowerCase() : '';
-  
-  if (parentTagName === 'h1' || parentNode.closest('h1')) {
-    document.getElementById('format-h1').classList.add('active');
-  } else if (parentTagName === 'h2' || parentNode.closest('h2')) {
-    document.getElementById('format-h2').classList.add('active');
-  } else if (parentTagName === 'h3' || parentNode.closest('h3')) {
-    document.getElementById('format-h3').classList.add('active');
-  } else if (parentTagName === 'blockquote' || parentNode.closest('blockquote')) {
-    document.getElementById('format-quote').classList.add('active');
-  }
-  
-  // Check for links
-  if (document.queryCommandState('createLink') || parentTagName === 'a' || parentNode.closest('a')) {
-    document.getElementById('format-link').classList.add('active');
+  // Check for block formats
+  const selection = window.getSelection();
+  if (selection.rangeCount > 0) {
+    const parentNode = selection.anchorNode.parentNode;
+    const parentTagName = parentNode.tagName ? parentNode.tagName.toLowerCase() : '';
+    
+    // Check for headings and blockquote
+    if (parentTagName === 'h1' || parentNode.closest('h1')) {
+      h1Button.classList.add('active');
+    } else if (parentTagName === 'h2' || parentNode.closest('h2')) {
+      h2Button.classList.add('active');
+    } else if (parentTagName === 'h3' || parentNode.closest('h3')) {
+      h3Button.classList.add('active');
+    } else if (parentTagName === 'blockquote' || parentNode.closest('blockquote')) {
+      quoteButton.classList.add('active');
+    }
+    
+    // Check for links
+    const isLink = parentTagName === 'a' || parentNode.closest('a');
+    if (isLink) {
+      linkButton.classList.add('active');
+      
+      // Show unlink button when a link is selected
+      if (unlinkButton) {
+        unlinkButton.style.display = 'inline-block';
+      }
+    }
   }
 }
 
@@ -300,7 +359,7 @@ function positionFormattingPopup() {
 function formatText(format) {
   const selection = window.getSelection();
   
-  if (selection.toString().trim().length === 0) {
+  if (selection.toString().trim().length === 0 && format !== 'image' && format !== 'unlink') {
     return;
   }
   
@@ -316,6 +375,12 @@ function formatText(format) {
     (format === 'h2' && (parentTagName === 'h2' || parentNode.closest('h2'))) ||
     (format === 'h3' && (parentTagName === 'h3' || parentNode.closest('h3'))) ||
     (format === 'blockquote' && (parentTagName === 'blockquote' || parentNode.closest('blockquote')));
+  
+  // Check if the selection is within a link for the link format
+  let linkNode = null;
+  if (format === 'link' || format === 'unlink') {
+    linkNode = parentTagName === 'a' ? parentNode : parentNode.closest('a');
+  }
   
   switch (format) {
     case 'bold':
@@ -351,10 +416,38 @@ function formatText(format) {
       // Set dir attribute after formatting
       setTimeout(() => setDirectionForParagraphs(), 0);
       break;
+    case 'unlink':
+      if (linkNode) {
+        document.execCommand('unlink', false, null);
+      }
+      break;
     case 'link':
-      const url = prompt('Enter URL:', 'https://');
+      // If selection is already a link, get the current URL for editing
+      let initialUrl = 'https://';
+      if (linkNode) {
+        initialUrl = linkNode.getAttribute('href') || 'https://';
+      }
+      
+      const url = prompt('Enter URL:', initialUrl);
       if (url) {
         document.execCommand('createLink', false, url);
+        
+        // Add ctrl+click functionality to all links
+        setTimeout(() => {
+          const links = editor.querySelectorAll('a');
+          links.forEach(link => {
+            if (!link.hasAttribute('data-link-handler')) {
+              link.setAttribute('data-link-handler', 'true');
+            }
+          });
+        }, 0);
+      }
+      break;
+    case 'image':
+      const imageUrl = prompt('Enter image URL:', 'https://');
+      if (imageUrl) {
+        // Insert image at cursor position
+        document.execCommand('insertHTML', false, `<img src="${imageUrl}" alt="Image" style="max-width: 100%; height: auto;">`);
       }
       break;
   }
@@ -726,53 +819,52 @@ function convertToMarkdown(html) {
   const temp = document.createElement('div');
   temp.innerHTML = html;
   
-  // Process the HTML elements
-  let markdown = '';
-  
-  // Process each child node
-  Array.from(temp.childNodes).forEach(node => {
+  // Process the HTML elements recursively
+  function processNode(node) {
+    let result = '';
+    
     if (node.nodeType === Node.TEXT_NODE) {
-      markdown += node.textContent;
+      return node.textContent;
     } else if (node.nodeType === Node.ELEMENT_NODE) {
       const tagName = node.tagName.toLowerCase();
+      const childContent = Array.from(node.childNodes).map(child => processNode(child)).join('');
       
       switch (tagName) {
         case 'h1':
-          markdown += `# ${node.textContent}\n\n`;
-          break;
+          return `# ${childContent}\n\n`;
         case 'h2':
-          markdown += `## ${node.textContent}\n\n`;
-          break;
+          return `## ${childContent}\n\n`;
         case 'h3':
-          markdown += `### ${node.textContent}\n\n`;
-          break;
+          return `### ${childContent}\n\n`;
         case 'p':
-          markdown += `${node.textContent}\n\n`;
-          break;
+          return `${childContent}\n\n`;
         case 'blockquote':
-          markdown += `> ${node.textContent}\n\n`;
-          break;
+          return `> ${childContent}\n\n`;
         case 'strong':
         case 'b':
-          markdown += `**${node.textContent}**`;
-          break;
+          return `**${childContent}**`;
         case 'em':
         case 'i':
-          markdown += `*${node.textContent}*`;
-          break;
+          return `*${childContent}*`;
         case 'u':
-          markdown += `<u>${node.textContent}</u>`;
-          break;
+          return `<u>${childContent}</u>`;
         case 'a':
-          markdown += `[${node.textContent}](${node.getAttribute('href')})`;
-          break;
+          return `[${childContent}](${node.getAttribute('href')})`;
         case 'br':
-          markdown += '\n';
-          break;
+          return '\n';
+        case 'img':
+          return `![${node.getAttribute('alt') || ''}](${node.getAttribute('src')})`;
         default:
-          markdown += node.textContent;
+          return childContent;
       }
     }
+    
+    return result;
+  }
+  
+  let markdown = '';
+  Array.from(temp.childNodes).forEach(node => {
+    markdown += processNode(node);
   });
   
   return markdown;
@@ -827,6 +919,9 @@ function handleFileUpload(e) {
 function convertMarkdownToHtml(markdown) {
   let html = markdown;
   
+  // Images - process these first to avoid conflicts with links
+  html = html.replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1">');
+  
   // Headers
   html = html.replace(/^# (.*$)/gm, '<h1 dir="auto">$1</h1>');
   html = html.replace(/^## (.*$)/gm, '<h2 dir="auto">$1</h2>');
@@ -838,6 +933,9 @@ function convertMarkdownToHtml(markdown) {
   // Italic
   html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
   
+  // Underline - HTML tag in markdown
+  html = html.replace(/<u>(.*?)<\/u>/g, '<u>$1</u>');
+  
   // Links
   html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>');
   
@@ -845,7 +943,7 @@ function convertMarkdownToHtml(markdown) {
   html = html.replace(/^> (.*$)/gm, '<blockquote dir="auto">$1</blockquote>');
   
   // Paragraphs
-  html = html.replace(/^(?!<h|<blockquote)(.*$)/gm, function(match) {
+  html = html.replace(/^(?!<h|<blockquote|<img)(.*$)/gm, function(match) {
     if (match.trim() === '') return '';
     return '<p dir="auto">' + match + '</p>';
   });
