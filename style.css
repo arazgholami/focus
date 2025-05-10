@@ -1,19 +1,13 @@
 @font-face {
-  font-family: 'IRAN';
-  src: url('fonts/woff2/IRAN.woff2') format('woff2'),
-       url('fonts/woff/IRAN.woff') format('woff'),
-       url('fonts/ttf/IRAN.ttf') format('truetype'),
-       url('fonts/eot/IRAN.eot') format('embedded-opentype');
+  font-family: 'Vazir';
+  src: url('fonts/Vazirmatn-Regular.woff2') format('woff2'),
   font-weight: normal;
   font-style: normal;
 }
 
 @font-face {
-  font-family: 'IRAN';
-  src: url('fonts/woff2/IRANBold.woff2') format('woff2'),
-       url('fonts/woff/IRANBold.woff') format('woff'),
-       url('fonts/ttf/IRANBold.ttf') format('truetype'),
-       url('fonts/eot/IRANBold.eot') format('embedded-opentype');
+  font-family: 'Vazir';
+  src: url('fonts/Vazirmatn-Bold.woff2') format('woff2'),
   font-weight: bold;
   font-style: normal;
 }
@@ -115,7 +109,7 @@ body[data-theme="dark"] {
 #editor {
   flex-grow: 1;
   line-height: 1.6;
-  max-width: 800px;
+  max-width: 830px;
   margin: 0 auto;
   width: 100%;
   outline: none;
