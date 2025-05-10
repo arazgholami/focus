@@ -1,13 +1,13 @@
 @font-face {
   font-family: 'Vazir';
-  src: url('fonts/Vazirmatn-Regular.woff2') format('woff2'),
+  src: url('fonts/Vazirmatn-Regular.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
 }
 
 @font-face {
   font-family: 'Vazir';
-  src: url('fonts/Vazirmatn-Bold.woff2') format('woff2'),
+  src: url('fonts/Vazirmatn-Bold.woff2') format('woff2');
   font-weight: bold;
   font-style: normal;
 }
@@ -45,7 +45,7 @@ html, body {
 }
 
 body {
-  font-family: sans, 'IRAN';
+  font-family: sans-serif;
   background-color: var(--bg-color);
   color: var(--text-color);
   transition: background-color 0.3s, color 0.3s;
@@ -71,7 +71,7 @@ body[data-theme="dark"] {
 
 #toolbar {
   position: fixed;
-  top: 50%;
+  top: 40%;
   left: 0;
   transform: translateY(-50%);
   display: flex;
@@ -83,6 +83,7 @@ body[data-theme="dark"] {
   z-index: 100;
   transition: opacity 0.3s, transform 0.3s;
   gap: 15px;
+  width: 62px;
 }
 
 #toolbar.hidden {
@@ -114,7 +115,7 @@ body[data-theme="dark"] {
   width: 100%;
   outline: none;
   font-size: 1.2rem;
-  font-family: serif, 'IRAN';
+  font-family: serif, 'Vazir';
   padding-top: 30px;
   min-height: 300px;
 }
@@ -151,6 +152,8 @@ body[data-theme="dark"] {
   margin-inline-end: 0;
   border-inline-start: 4px solid #ccc;
 }
+
+
 
 #formatting-popup {
   position: absolute;
@@ -261,6 +264,15 @@ body[data-theme="dark"] {
 .document-title {
   font-size: 1.1rem;
   flex-grow: 1;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: background-color 0.2s;
+}
+
+.document-title[contenteditable=true] {
+  background-color: rgba(0, 102, 255, 0.1);
+  outline: 1px solid #0066ff;
+  min-width: 100px;
 }
 
 .document-date {
@@ -331,7 +343,7 @@ body[data-theme="dark"] {
   margin-right: 12px;
   color: var(--text-color);
   text-decoration: none;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
 }
 
 .status-link:hover {
@@ -431,7 +443,7 @@ body[data-theme="dark"] {
 
 /* RTL Support */
 [dir="rtl"] {
-  font-family: 'IRAN', serif;
+  font-family: 'Vazir', serif;
 }
 
 /* Editor content styling */

@@ -57,6 +57,9 @@ function init() {
   
   // Set initial theme
   applyTheme();
+  
+  // Initialize Bootstrap tooltips
+  initBootstrapTooltips();
 }
 
 // Load documents from localStorage
@@ -88,6 +91,8 @@ function loadPreferences() {
 
 // Set up all event listeners
 function setupEventListeners() {
+
+  
   // Editor events
   editor.addEventListener('input', handleInput);
   editor.addEventListener('keydown', handleKeyDown);
@@ -137,7 +142,6 @@ function setupEventListeners() {
   document.getElementById('format-h3').addEventListener('click', () => formatText('h3'));
   document.getElementById('format-quote').addEventListener('click', () => formatText('blockquote'));
   document.getElementById('format-link').addEventListener('click', () => formatText('link'));
-  document.getElementById('format-image').addEventListener('click', () => formatText('image'));
   document.getElementById('format-unlink').addEventListener('click', () => formatText('unlink'));
   
   // List popup events
@@ -244,6 +248,9 @@ function handleTextSelection() {
 
 // Handle double click to show formatting popup
 function handleDoubleClick(e) {
+  // Prevent default behavior to avoid text selection
+  e.preventDefault();
+  
   const selection = window.getSelection();
   
   // If there's text selected, show the formatting popup
@@ -257,6 +264,7 @@ function handleDoubleClick(e) {
   // Handle double-click on empty areas or between paragraphs
   if (e.target === editor || 
       (e.target.tagName === 'P' && e.target.textContent.trim() === '') ||
+      (e.target.tagName === 'DIV' && e.target.id === 'editor') ||
       (e.target === document.body && editor.contains(selection.anchorNode))) {
     
     // Position cursor at the double-click position
@@ -264,8 +272,19 @@ function handleDoubleClick(e) {
     if (range) {
       selection.removeAllRanges();
       selection.addRange(range);
+      
+      // If editor is empty, add a paragraph
+      if (editor.innerHTML.trim() === '') {
+        editor.innerHTML = '<p><br></p>';
+        const newRange = document.createRange();
+        newRange.setStart(editor.querySelector('p'), 0);
+        newRange.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(newRange);
+      }
     }
     
+    // Always show the formatting popup on double-click, even in empty areas
     formattingPopup.classList.remove('hidden');
     checkActiveFormattingStyles();
     positionFormattingPopup();
@@ -359,7 +378,7 @@ function positionFormattingPopup() {
 function formatText(format) {
   const selection = window.getSelection();
   
-  if (selection.toString().trim().length === 0 && format !== 'image' && format !== 'unlink') {
+  if (selection.toString().trim().length === 0 && format !== 'unlink') {
     return;
   }
   
@@ -443,13 +462,7 @@ function formatText(format) {
         }, 0);
       }
       break;
-    case 'image':
-      const imageUrl = prompt('Enter image URL:', 'https://');
-      if (imageUrl) {
-        // Insert image at cursor position
-        document.execCommand('insertHTML', false, `<img src="${imageUrl}" alt="Image" style="max-width: 100%; height: auto;">`);
-      }
-      break;
+
   }
   
   // Hide formatting popup
@@ -590,7 +603,7 @@ function saveCurrentDocumentContent() {
 
 // Save current document (explicit save)
 function saveCurrentDocument() {
-  saveCurrentDocumentContent();
+  if (!currentDocumentId) return;
   
   // Show brief saved notification
   const saveBtn = document.getElementById('save-btn');
@@ -600,6 +613,23 @@ function saveCurrentDocument() {
   setTimeout(() => {
     saveBtn.textContent = originalText;
   }, 1500);
+}
+
+// Save document title
+function saveDocumentTitle(id, newTitle) {
+  if (!id || !documents[id]) return;
+  
+  // Don't save empty titles
+  if (!newTitle.trim()) {
+    newTitle = 'Untitled Document';
+  }
+  
+  // Update document title
+  documents[id].title = newTitle;
+  documents[id].updated = new Date().toISOString();
+  
+  // Save to storage
+  saveDocumentsToStorage();
 }
 
 // Save all documents to localStorage
@@ -655,6 +685,88 @@ function updateDocumentsList() {
     const docTitle = document.createElement('div');
     docTitle.className = 'document-title';
     docTitle.textContent = doc.title;
+    docTitle.setAttribute('title', 'Double-click to rename');
+    
+    // Track clicks for distinguishing between single and double clicks
+    let clickTimer = null;
+    let preventSingleClick = false;
+    
+    docTitle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      
+      if (preventSingleClick) {
+        return;
+      }
+      
+      // If we're in edit mode, don't do anything on click
+      if (docTitle.contentEditable === 'true') {
+        return;
+      }
+      
+      // Set a timer to detect if this is a double click
+      if (clickTimer === null) {
+        clickTimer = setTimeout(() => {
+          clickTimer = null;
+          if (!preventSingleClick) {
+            // This was a single click, load the document
+            loadDocument(doc.id);
+            listPopup.classList.add('hidden');
+          }
+        }, 300); // 300ms is typical double-click threshold
+      }
+    });
+    
+    // Add double-click event to make title editable
+    docTitle.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      
+      // Clear any pending single-click timer
+      if (clickTimer) {
+        clearTimeout(clickTimer);
+        clickTimer = null;
+      }
+      
+      // Prevent the single-click action
+      preventSingleClick = true;
+      
+      // Make title editable
+      docTitle.contentEditable = true;
+      docTitle.focus();
+      
+      // Select all text
+      const range = document.createRange();
+      range.selectNodeContents(docTitle);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+    });
+    
+    // Save title on blur or Enter key
+    docTitle.addEventListener('blur', () => {
+      saveDocumentTitle(doc.id, docTitle.textContent.trim());
+      docTitle.contentEditable = false;
+      
+      // Reset click tracking after a short delay
+      setTimeout(() => {
+        preventSingleClick = false;
+      }, 300);
+    });
+    
+    docTitle.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        docTitle.blur();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        docTitle.textContent = doc.title; // Revert changes
+        docTitle.contentEditable = false;
+        
+        // Reset click tracking after a short delay
+        setTimeout(() => {
+          preventSingleClick = false;
+        }, 300);
+      }
+    });
     
     const docDate = document.createElement('div');
     docDate.className = 'document-date';
@@ -979,5 +1091,43 @@ function handleShortcuts(e) {
   }
 }
 
+
+
+
+
+// Initialize Bootstrap tooltips
+function initBootstrapTooltips() {
+  // Check if Bootstrap is available first
+  if (typeof bootstrap === 'undefined') {
+    console.warn('Bootstrap library not loaded, skipping tooltip initialization');
+    return;
+  }
+  
+  try {
+    // Remove default title attributes and replace with data-bs-toggle and data-bs-title
+    const elementsWithTitle = document.querySelectorAll('[title]');
+    elementsWithTitle.forEach(el => {
+      const title = el.getAttribute('title');
+      if (title) {
+        el.removeAttribute('title');
+        el.setAttribute('data-bs-toggle', 'tooltip');
+        el.setAttribute('data-bs-title', title);
+      }
+    });
+    
+    // Initialize all tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl, {
+        trigger: 'hover'
+      });
+    });
+  } catch (error) {
+    console.error('Error initializing Bootstrap tooltips:', error);
+  }
+}
+
 // Initialize the app when DOM is loaded
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', () => {
+  init();
+});
