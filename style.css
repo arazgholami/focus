@@ -469,12 +469,16 @@ body[data-theme="dark"] {
   color: var(--highlight-color);
 }
 
-#editor img {
-  max-width: 100%;
-  height: auto;
-  display: block;
-  margin: 10px 0;
+#editor div {
+  line-height: 28px;
+  margin-top: 15px;
 }
+
+#editor div:dir(rtl) span {
+  font-size: 18px !important;
+  line-height: 26px !important;
+}
+
 
 .popup-header {
   border: none;
