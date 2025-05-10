@@ -3,86 +3,71 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="./focus-icon.png" type="image/png">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="application-name" content="Focus">
-  <meta name="apple-mobile-web-app-title" content="Focus">
-  <meta name="theme-color" content="#f8f5f0">
-  <meta name="msapplication-navbutton-color" content="#f8f5f0">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="msapplication-starturl" content="/">
-  <title>Focus</title>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-  <link rel="manifest" href="./manifest.json">
-  <link rel="stylesheet" href="./style.css?ver=1.18">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <title>Focus - A Clean Writing Tool</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="focus-icon.png" type="image/png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css?ver=1.20">
 </head>
 <body>
-  <audio src="sounds/key-01.mp3" id="mp3-key-01"></audio>
-  <audio src="sounds/key-02.mp3" id="mp3-key-02"></audio>
-  <audio src="sounds/key-03.mp3" id="mp3-key-03"></audio>
-  <audio src="sounds/key-04.mp3" id="mp3-key-04"></audio>
-  <audio src="sounds/key-new-01.mp3" id="mp3-key-new-01"></audio>
-  <audio src="sounds/key-new-02.mp3" id="mp3-key-new-02"></audio>
-  <audio src="sounds/key-new-03.mp3" id="mp3-key-new-03"></audio>
-  <audio src="sounds/key-new-04.mp3" id="mp3-key-new-04"></audio>
-  <audio src="sounds/key-new-05.mp3" id="mp3-key-new-05"></audio>
-  <audio src="sounds/return.mp3" id="mp3-return"></audio>
-  <audio src="sounds/return-new.mp3" id="mp3-return-new"></audio>
-  <audio src="sounds/scrollDown.mp3" id="mp3-scrollDown"></audio>
-  <audio src="sounds/scrollUp.mp3" id="mp3-scrollUp"></audio>
-  <audio src="sounds/space.mp3" id="mp3-space"></audio>
-  <audio src="sounds/space-new.mp3" id="mp3-space-new"></audio>
-  <div id="writing-area">
-    <div id="editor" class="editor" contenteditable="true" spellcheck="false">
+  <div id="app">
+    <div id="toolbar">
+      <button id="fullscreen-btn" title="Toggle Fullscreen"><i class="fas fa-expand"></i></button>
+      <button id="list-btn" title="Your Writings"><i class="fas fa-list"></i></button>
+      <button id="theme-btn" title="Toggle Dark Mode"><i class="fas fa-moon"></i></button>
+      <button id="sound-btn" title="Toggle Sounds"><i class="fas fa-volume-up"></i></button>
+      <button id="load-btn" title="Load MD File"><i class="fas fa-file-upload"></i></button>
+      <button id="download-btn" title="Download as MD"><i class="fas fa-download"></i></button>
     </div>
-  </div>
-  <div id="toolbar">
-    <button id="fullscreen-btn" title="Toggle Fullscreen"><i class="fas fa-expand"></i></button>
-    <button id="list-btn" title="Your Writings"><i class="fas fa-list"></i></button>
-    <button id="theme-btn" title="Toggle Dark Mode"><i class="fas fa-moon"></i></button>
-    <button id="sound-btn" title="Toggle Sounds"><i class="fas fa-volume-up"></i></button>
-    <button id="load-btn" title="Load MD File"><i class="fas fa-file-upload"></i></button>
-    <button id="download-btn" title="Download as MD"><i class="fas fa-download"></i></button>
+
+    <div id="editor" contenteditable="true" spellcheck="true" dir="auto" placeholder="What's in your mind?"></div>
+    
+    <div id="formatting-popup" class="hidden">
+      <button id="format-bold" title="Bold"><i class="fas fa-bold"></i></button>
+      <button id="format-italic" title="Italic"><i class="fas fa-italic"></i></button>
+      <button id="format-underline" title="Underline"><i class="fas fa-underline"></i></button>
+      <button id="format-h1" title="Heading 1">H1</button>
+      <button id="format-h2" title="Heading 2">H2</button>
+      <button id="format-h3" title="Heading 3">H3</button>
+      <button id="format-quote" title="Quote"><i class="fas fa-quote-right"></i></button>
+      <button id="format-link" title="Link"><i class="fas fa-link"></i></button>
+    </div>
+
+    <div id="list-popup" class="popup hidden">
+      <div class="popup-header">
+        <button id="download-all-btn" class="btn btn-dark">Download All</button>
+        <button id="close-list" class="close-popup"><i class="fas fa-times"></i></button>
+      </div>
+      <div id="documents-list"></div>
+      </div>
+    </div>
+
+    <div id="status-bar">
+      <div class="status-left">
+        <a href="https://arazgholami.github.io/focus" class="logo-link">
+          <img src="./focus.png" alt="Focus Logo" class="logo">
+          <span><section class="title">Focus</section><small class="author"><br>By Araz Gholami</small></span>
+        </a>
+        <a href="https://github.com/arazgholami/focus" target="_blank" class="status-link">Github</a>
+        <a href="mailto:contact@arazgholami.com" target="_blank" class="status-link">Contact</a>
+        <a href="https://buymeacoffee.com/arazgholami" target="_blank" class="status-link">Donate</a>
+        <div class="formatting-shortcuts">
+          <span class="shortcut"><i class="fas fa-bold"></i> Ctrl+B</span>
+          <span class="shortcut"><i class="fas fa-italic"></i> Ctrl+I</span>
+          <span class="shortcut"><i class="fas fa-underline"></i> Ctrl+U</span>
+        </div>
+      </div>
+      <div class="status-right">
+        <div id="counter"></div>
+        <button id="new-btn" class="action-btn">New</button>
+        <button id="save-btn" class="action-btn">Save</button>
+      </div>
+    </div>
   </div>
 
-  <div id="status-bar">
-    <div class="status-left">
-      <a href="https://arazgholami.github.io/focus" class="logo-link">
-        <img src="./focus.png" alt="Focus Logo" class="logo">
-        <span>Focus</span>
-      </a>
-      <a href="https://github.com/arazgholami/focus" target="_blank" class="status-link">Github</a>
-      <a href="mailto:contact@arazgholami.com" target="_blank"class="status-link">Contact</a>
-      <a href="https://buymeacoffee.com/arazgholami" target="_blank"class="status-link">Donate</a>
-      <div class="formatting-shortcuts">
-        <span class="shortcut"><i class="fas fa-bold"></i> Ctrl+B</span>
-        <span class="shortcut"><i class="fas fa-italic"></i> Ctrl+I</span>
-        <span class="shortcut"><i class="fas fa-underline"></i> Ctrl+U</span>
-      </div>
-    </div>
-    <div class="status-right">
-      <div id="counter"></div>
-      <button id="new-btn" class="action-btn">New</button>
-      <button id="save-btn" class="action-btn">Save</button>
-    </div>
-  </div>
-  <div id="writings-modal" class="modal">
-    <div class="modal-content">
-      <span class="close-modal">&times;</span>
-      <div class="writings-header">
-        <button id="download-all-btn" class="action-btn"><i class="fas fa-download"></i> Download All</button>
-      </div>
-      <ul class="writings-list" id="writings-list"></ul>
-    </div>
-  </div>
-  <script src="./script.js?ver=1.19"></script>
-  <div id="format-popup">
-    <button id="format-bold" title="Bold"><i class="fas fa-bold"></i></button>
-    <button id="format-italic" title="Italic"><i class="fas fa-italic"></i></button>
-    <button id="format-underline" title="Underline"><i class="fas fa-underline"></i></button>
-  </div>
+  <input type="file" id="file-input" accept=".md,.txt" style="display: none;">
+  
+  <script src="script.js?ver=1.20"></script>
 </body>
 </html>
