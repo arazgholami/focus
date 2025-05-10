@@ -3,6 +3,7 @@ let currentDocumentId = null;
 let isTyping = false;
 let typingTimer = null;
 let soundEnabled = true;
+let soundVolume = 0.5; // Default volume at 50%
 let isDarkMode = false;
 let isFullscreen = false;
 let documents = {};
@@ -77,9 +78,18 @@ function loadDocumentsFromStorage() {
 
 // Load user preferences
 function loadPreferences() {
-  const savedSoundPreference = localStorage.getItem('focus_sound_enabled');
-  if (savedSoundPreference !== null) {
-    soundEnabled = savedSoundPreference === 'true';
+  const savedSoundVolume = localStorage.getItem('focus_sound_volume');
+  if (savedSoundVolume !== null) {
+    soundVolume = parseFloat(savedSoundVolume);
+    document.getElementById('volume-slider').value = soundVolume * 100;
+    document.getElementById('volume-value').textContent = Math.round(soundVolume * 100) + '%';
+    soundEnabled = soundVolume > 0;
+    updateSoundButton();
+  } else {
+    // Set default volume to 50%
+    soundVolume = 0.5;
+    document.getElementById('volume-slider').value = 50;
+    document.getElementById('volume-value').textContent = '50%';
     updateSoundButton();
   }
   
@@ -128,6 +138,27 @@ function setupEventListeners() {
   document.getElementById('sound-btn').addEventListener('click', toggleSound);
   document.getElementById('load-btn').addEventListener('click', () => fileInput.click());
   document.getElementById('download-btn').addEventListener('click', downloadCurrentDocument);
+  
+  // Volume slider event
+  document.getElementById('volume-slider').addEventListener('input', function() {
+    soundVolume = this.value / 100;
+    updateSoundButton();
+    localStorage.setItem('focus_sound_volume', soundVolume);
+    
+    // Update volume percentage display
+    document.getElementById('volume-value').textContent = Math.round(soundVolume * 100) + '%';
+  });
+  
+  // Close volume popup when clicking outside
+  document.addEventListener('click', function(e) {
+    const volumePopup = document.getElementById('volume-popup');
+    const soundBtn = document.getElementById('sound-btn');
+    
+    if (volumePopup && !volumePopup.classList.contains('hidden') && 
+        !volumePopup.contains(e.target) && e.target !== soundBtn && !soundBtn.contains(e.target)) {
+      volumePopup.classList.add('hidden');
+    }
+  });
   
   // Status bar button events
   document.getElementById('new-btn').addEventListener('click', createNewDocument);
@@ -217,11 +248,11 @@ function playSound(type) {
     // Play random key sound
     const randomIndex = Math.floor(Math.random() * sounds.key.length);
     const sound = sounds.key[randomIndex].cloneNode();
-    sound.volume = 0.5;
+    sound.volume = soundVolume;
     sound.play();
   } else if (sounds[type]) {
     const sound = sounds[type].cloneNode();
-    sound.volume = 0.5;
+    sound.volume = soundVolume;
     sound.play();
   }
 }
@@ -535,20 +566,41 @@ function applyTheme() {
   }
 }
 
-// Toggle typewriter sounds
+// Show volume control popup
 function toggleSound() {
-  soundEnabled = !soundEnabled;
-  updateSoundButton();
+  const soundBtn = document.getElementById('sound-btn');
+  const volumePopup = document.getElementById('volume-popup');
   
-  // Save preference
-  localStorage.setItem('focus_sound_enabled', soundEnabled);
+  // Toggle volume popup visibility
+  if (volumePopup.classList.contains('hidden')) {
+    volumePopup.classList.remove('hidden');
+    // Position the popup to the right of the sound button
+    const btnRect = soundBtn.getBoundingClientRect();
+    volumePopup.style.left = (btnRect.right + 115) + 'px';
+    volumePopup.style.top = (btnRect.top + 10) + 'px';
+  } else {
+    volumePopup.classList.add('hidden');
+  }
 }
 
-// Update sound button icon
+// Update sound button icon based on volume level
 function updateSoundButton() {
-  document.getElementById('sound-btn').innerHTML = soundEnabled ? 
-    '<i class="fas fa-volume-up"></i>' : 
-    '<i class="fas fa-volume-mute"></i>';
+  let iconClass = 'fa-volume-mute';
+  
+  if (soundVolume > 0) {
+    soundEnabled = true;
+    if (soundVolume < 0.3) {
+      iconClass = 'fa-volume-off';
+    } else if (soundVolume < 0.7) {
+      iconClass = 'fa-volume-down';
+    } else {
+      iconClass = 'fa-volume-up';
+    }
+  } else {
+    soundEnabled = false;
+  }
+  
+  document.getElementById('sound-btn').innerHTML = `<i class="fas ${iconClass}"></i>`;
 }
 
 // Create a new document

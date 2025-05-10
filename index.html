@@ -8,7 +8,7 @@
   <link rel="icon" href="focus-icon.png" type="image/png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="style.css?ver=1.41">
+  <link rel="stylesheet" href="style.css?ver=1.48">
 </head>
 <body>
   <div id="app">
@@ -16,9 +16,16 @@
       <button id="fullscreen-btn" title="Toggle Fullscreen"><i class="fas fa-expand"></i></button>
       <button id="list-btn" title="Your Writings"><i class="fas fa-list"></i></button>
       <button id="theme-btn" title="Toggle Dark Mode"><i class="fas fa-moon"></i></button>
-      <button id="sound-btn" title="Toggle Sounds"><i class="fas fa-volume-up"></i></button>
+      <button id="sound-btn" title="Volume Control"><i class="fas fa-volume-up"></i></button>
       <button id="load-btn" title="Load MD File"><i class="fas fa-file-upload"></i></button>
       <button id="download-btn" title="Download as MD"><i class="fas fa-download"></i></button>
+    </div>
+    
+    <div id="volume-popup" class="popup hidden">
+      <div class="volume-control">
+        <input type="range" id="volume-slider" min="0" max="100" value="50" class="volume-slider">
+        <div class="volume-label">Volume: <span id="volume-value">50%</span></div>
+      </div>
     </div>
 
     <div id="editor" contenteditable="true" spellcheck="true" dir="auto" placeholder="What's in your mind?"></div>
@@ -68,6 +75,6 @@
   </div>
   <input type="file" id="file-input" accept=".md,.txt" style="display: none;">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-  <script src="script.js?ver=1.41"></script>
+  <script src="script.js?ver=1.48"></script>
 </body>
 </html>
