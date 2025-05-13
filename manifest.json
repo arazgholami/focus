@@ -1,0 +1,23 @@
+{
+  "name": "Focus",
+  "short_name": "Focus",
+  "description": "A clean and simple writing tool",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f8f5f0",
+  "theme_color": "#f8f5f0",
+  "icons": [
+    {
+      "src": "focus.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "focus.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+} 
