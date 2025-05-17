@@ -41,32 +41,18 @@ const sounds = {
 
 function init() {
   
-  loadDocumentsFromStorage();
-  
-  
-  loadPreferences();
-  
-  
+  loadDocumentsFromStorage();  
+  loadPreferences();  
   if (currentDocumentId && documents[currentDocumentId]) {
     loadDocument(currentDocumentId);
   } else {
     createNewDocument();
-  }
-  
-  
-  setupEventListeners();
-  
-  
-  updateCounter();
-  
-  
-  applyTheme();
-  
-  
+  }  
+  setupEventListeners();  
+  updateCounter();  
+  applyTheme();  
   applyBackground();
-  updateBackgroundSelection();
-  
-  
+  updateBackgroundSelection();  
   initBootstrapTooltips();
 }
 
@@ -97,36 +83,26 @@ function loadPreferences() {
     document.getElementById('volume-slider').value = 50;
     document.getElementById('volume-value').textContent = '50%';
     updateSoundButton();
-  }
-  
-  
+  }  
   const savedThemePreference = localStorage.getItem('focus_dark_mode');
   if (savedThemePreference !== null) {
     isDarkMode = savedThemePreference === 'true';
-  }
-  
-  
+  }  
   const savedFontFamily = localStorage.getItem('focus_font_family');
   if (savedFontFamily !== null) {
     fontFamily = savedFontFamily;
-  }
-  
-  
+  }  
   const savedFontSize = localStorage.getItem('focus_font_size');
   if (savedFontSize !== null) {
     fontSize = parseInt(savedFontSize);
   }
   document.getElementById('font-size-slider').value = fontSize;
-  updateFontSizeLabel();
-  
-  
+  updateFontSizeLabel();  
   const savedEditorWidth = localStorage.getItem('focus_editor_width');
   if (savedEditorWidth !== null) {
     editorWidth = parseInt(savedEditorWidth);
     document.getElementById('editor-width-input').value = editorWidth;
-  }
-  
-  
+  }  
   try {
     const savedCustomBackground = localStorage.getItem('focus_custom_background');
     const savedUseCustomBg = localStorage.getItem('focus_use_custom_bg');
@@ -148,9 +124,7 @@ function loadPreferences() {
     
     localStorage.removeItem('focus_custom_background');
     localStorage.setItem('focus_use_custom_bg', 'false');
-  }
-  
-  
+  }  
   applySettings();
 }
 
@@ -172,29 +146,21 @@ function setupEventListeners() {
         formattingPopup.classList.add('hidden');
       }
     }, 100);
-  });
-  
-  
+  });  
   editor.addEventListener('click', (e) => {
     
     if ((e.ctrlKey || e.metaKey) && e.target.tagName === 'A') {
       e.preventDefault();
       window.open(e.target.href, '_blank');
     }
-  });
-  
-  
+  });  
   document.getElementById('fullscreen-btn').addEventListener('click', toggleFullscreen);
   document.getElementById('list-btn').addEventListener('click', toggleDocumentsList);
   document.getElementById('sound-btn').addEventListener('click', toggleSound);
   document.getElementById('settings-btn').addEventListener('click', toggleSettings);
   document.getElementById('load-btn').addEventListener('click', () => fileInput.click());
-  document.getElementById('download-btn').addEventListener('click', downloadCurrentDocument);
-  
-  
-  document.getElementById('theme-toggle').addEventListener('click', toggleDarkMode);
-  
-  
+  document.getElementById('download-btn').addEventListener('click', downloadCurrentDocument);  
+  document.getElementById('theme-toggle').addEventListener('click', toggleDarkMode);  
   document.getElementById('volume-slider').addEventListener('input', function() {
     soundVolume = this.value / 100;
     updateSoundButton();
@@ -202,9 +168,7 @@ function setupEventListeners() {
     
     
     document.getElementById('volume-value').textContent = Math.round(soundVolume * 100) + '%';
-  });
-  
-  
+  });  
   document.addEventListener('click', function(e) {
     
     const volumePopup = document.getElementById('volume-popup');
@@ -222,13 +186,9 @@ function setupEventListeners() {
         !settingsPopup.contains(e.target) && e.target !== settingsBtn && !settingsBtn.contains(e.target)) {
       settingsPopup.classList.add('hidden');
     }
-  });
-  
-  
+  });  
   document.getElementById('new-btn').addEventListener('click', createNewDocument);
-  document.getElementById('save-btn').addEventListener('click', saveCurrentDocument);
-  
-  
+  document.getElementById('save-btn').addEventListener('click', saveCurrentDocument);  
   document.getElementById('format-bold').addEventListener('click', () => formatText('bold'));
   document.getElementById('format-italic').addEventListener('click', () => formatText('italic'));
   document.getElementById('format-underline').addEventListener('click', () => formatText('underline'));
@@ -237,38 +197,26 @@ function setupEventListeners() {
   document.getElementById('format-h3').addEventListener('click', () => formatText('h3'));
   document.getElementById('format-quote').addEventListener('click', () => formatText('blockquote'));
   document.getElementById('format-link').addEventListener('click', () => formatText('link'));
-  document.getElementById('format-unlink').addEventListener('click', () => formatText('unlink'));
-  
-  
+  document.getElementById('format-unlink').addEventListener('click', () => formatText('unlink'));  
   document.getElementById('close-list').addEventListener('click', () => listPopup.classList.add('hidden'));
-  document.getElementById('download-all-btn').addEventListener('click', downloadAllDocuments);
-  
-  
-  document.getElementById('close-settings').addEventListener('click', () => settingsPopup.classList.add('hidden'));
-  
-  
+  document.getElementById('download-all-btn').addEventListener('click', downloadAllDocuments);  
+  document.getElementById('close-settings').addEventListener('click', () => settingsPopup.classList.add('hidden'));  
   document.getElementById('font-family-select').addEventListener('change', function() {
     fontFamily = this.value;
     localStorage.setItem('focus_font_family', fontFamily);
     applySettings();
-  });
-  
-  
+  });  
   document.getElementById('font-size-slider').addEventListener('input', function() {
     fontSize = parseInt(this.value);
     updateFontSizeLabel();
     localStorage.setItem('focus_font_size', fontSize);
     applySettings();
-  });
-  
-  
+  });  
   document.getElementById('editor-width-input').addEventListener('change', function() {
     editorWidth = parseInt(this.value);
     localStorage.setItem('focus_editor_width', editorWidth);
     applySettings();
-  });
-  
-  
+  });  
   document.getElementById('default-bg').addEventListener('click', function() {
     useCustomBg = false;
     localStorage.setItem('focus_use_custom_bg', 'false');
@@ -289,34 +237,22 @@ function setupEventListeners() {
     document.getElementById('bg-file-input').click();
   });
   
-  document.getElementById('bg-file-input').addEventListener('change', handleBackgroundUpload);
-  
-  
-  fileInput.addEventListener('change', handleFileUpload);
-  
-  
+  document.getElementById('bg-file-input').addEventListener('change', handleBackgroundUpload);  
+  fileInput.addEventListener('change', handleFileUpload);  
   window.addEventListener('resize', positionFormattingPopup);
   window.addEventListener('scroll', () => {
     if (isTyping) return;
     positionFormattingPopup();
-  });
-  
-  
+  });  
   document.addEventListener('keydown', handleShortcuts);
 }
 
 function handleInput() {
   
-  isTyping = true;
-  
-  
+  isTyping = true;  
   toolbar.classList.add('hidden');
-  statusBar.classList.add('hidden');
-  
-  
-  clearTimeout(typingTimer);
-  
-  
+  statusBar.classList.add('hidden');  
+  clearTimeout(typingTimer);  
   typingTimer = setTimeout(() => {
     isTyping = false;
     toolbar.classList.remove('hidden');
@@ -327,16 +263,12 @@ function handleInput() {
     
     
     updateCounter();
-  }, 1500);
-  
-  
+  }, 1500);  
   setDirectionForParagraphs();
 }
 
 function handleKeyDown(e) {
-  if (!soundEnabled) return;
-  
-  
+  if (!soundEnabled) return;  
   if (e.key === 'Backspace') {
     playSound('backspace');
   } else if (e.key === 'Enter') {
@@ -389,17 +321,13 @@ function handleDoubleClick(e) {
   
   e.preventDefault();
   
-  const selection = window.getSelection();
-  
-  
+  const selection = window.getSelection();  
   if (selection.toString().trim().length > 0) {
     formattingPopup.classList.remove('hidden');
     checkActiveFormattingStyles();
     positionFormattingPopup();
     return;
-  } 
-  
-  
+  }   
   if (e.target === editor || 
       (e.target.tagName === 'P' && e.target.textContent.trim() === '') ||
       (e.target.tagName === 'DIV' && e.target.id === 'editor') ||
@@ -438,9 +366,7 @@ function checkActiveFormattingStyles() {
   const h3Button = document.getElementById('format-h3');
   const quoteButton = document.getElementById('format-quote');
   const linkButton = document.getElementById('format-link');
-  const unlinkButton = document.getElementById('format-unlink');
-  
-  
+  const unlinkButton = document.getElementById('format-unlink');  
   boldButton.classList.remove('active');
   italicButton.classList.remove('active');
   underlineButton.classList.remove('active');
@@ -448,14 +374,10 @@ function checkActiveFormattingStyles() {
   h2Button.classList.remove('active');
   h3Button.classList.remove('active');
   quoteButton.classList.remove('active');
-  linkButton.classList.remove('active');
-  
-  
+  linkButton.classList.remove('active');  
   if (unlinkButton) {
     unlinkButton.style.display = 'none';
-  }
-  
-  
+  }  
   if (document.queryCommandState('bold')) {
     boldButton.classList.add('active');
   }
@@ -466,9 +388,7 @@ function checkActiveFormattingStyles() {
   
   if (document.queryCommandState('underline')) {
     underlineButton.classList.add('active');
-  }
-  
-  
+  }  
   const selection = window.getSelection();
   if (selection.rangeCount > 0) {
     const parentNode = selection.anchorNode.parentNode;
@@ -515,22 +435,16 @@ function formatText(format) {
   
   if (selection.toString().trim().length === 0 && format !== 'unlink') {
     return;
-  }
-  
-  
+  }  
   const range = selection.getRangeAt(0);
-  const selectedText = selection.toString();
-  
-  
+  const selectedText = selection.toString();  
   const parentNode = selection.anchorNode.parentNode;
   const parentTagName = parentNode.tagName ? parentNode.tagName.toLowerCase() : '';
   const isFormatActive = 
     (format === 'h1' && (parentTagName === 'h1' || parentNode.closest('h1'))) ||
     (format === 'h2' && (parentTagName === 'h2' || parentNode.closest('h2'))) ||
     (format === 'h3' && (parentTagName === 'h3' || parentNode.closest('h3'))) ||
-    (format === 'blockquote' && (parentTagName === 'blockquote' || parentNode.closest('blockquote')));
-  
-  
+    (format === 'blockquote' && (parentTagName === 'blockquote' || parentNode.closest('blockquote')));  
   let linkNode = null;
   if (format === 'link' || format === 'unlink') {
     linkNode = parentTagName === 'a' ? parentNode : parentNode.closest('a');
@@ -597,12 +511,8 @@ function formatText(format) {
         }, 0);
       }
       break;
-  }
-  
-  
-  formattingPopup.classList.add('hidden');
-  
-  
+  }  
+  formattingPopup.classList.add('hidden');  
   saveCurrentDocumentContent();
 }
 
@@ -645,15 +555,9 @@ function toggleFullscreen() {
 }
 
 function toggleDarkMode() {
-  isDarkMode = !isDarkMode;
-  
-  
-  localStorage.setItem('focus_dark_mode', isDarkMode);
-  
-  
-  applyTheme();
-  
-  
+  isDarkMode = !isDarkMode;  
+  localStorage.setItem('focus_dark_mode', isDarkMode);  
+  applyTheme();  
   const themeToggle = document.getElementById('theme-toggle');
   if (isDarkMode) {
     themeToggle.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
@@ -663,15 +567,11 @@ function toggleDarkMode() {
 }
 
 function applyTheme() {
-  document.body.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
-  
-  
+  document.body.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');  
   if (!useCustomBg) {
     
     document.body.style.backgroundImage = '';
-  }
-  
-  
+  }  
   if (customBackground) {
     const customBgElement = document.getElementById('custom-bg');
     customBgElement.style.backgroundImage = `url(${customBackground})`;
@@ -684,57 +584,39 @@ function toggleSettings() {
   const fontSelect = document.getElementById('font-family-select');
   if (fontSelect.options.length === 0) {
     loadSystemFonts();
-  }
-  
-  
+  }  
   const themeToggle = document.getElementById('theme-toggle');
   if (isDarkMode) {
     themeToggle.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
   } else {
     themeToggle.innerHTML = '<i class="fas fa-moon"></i> Dark Mode';
-  }
-  
-  
-  updateBackgroundSelection();
-  
-  
+  }  
+  updateBackgroundSelection();  
   settingsPopup.classList.toggle('hidden');
 }
 
 function loadSystemFonts() {
-  const fontSelect = document.getElementById('font-family-select');
-  
-  
-  fontSelect.innerHTML = '';
-  
-  
+  const fontSelect = document.getElementById('font-family-select');  
+  fontSelect.innerHTML = '';  
   const appFontOption = document.createElement('option');
   appFontOption.value = 'Vazir';
   appFontOption.textContent = 'Vazir (Default)';
-  appFontOption.style.fontFamily = 'Vazir';
-  
-  
+  appFontOption.style.fontFamily = 'Vazir';  
   if (fontFamily === 'Vazir') {
     appFontOption.selected = true;
   }
   
-  fontSelect.appendChild(appFontOption);
-  
-  
+  fontSelect.appendChild(appFontOption);  
   const separator = document.createElement('option');
   separator.disabled = true;
   separator.style.borderBottom = '1px solid #ccc';
   separator.textContent = '──────────────';
-  fontSelect.appendChild(separator);
-  
-  
+  fontSelect.appendChild(separator);  
   const defaultFonts = [
     'Arial', 'Brush Script MT', 'Courier New', 'cursive', 'fantasy', 'Garamond', 
     'Georgia', 'Helvetica', 'monospace', 'sans-serif', 'serif', 'system-ui',
     'Tahoma', 'Times New Roman', 'Trebuchet MS', 'Verdana'
-  ];
-  
-  
+  ];  
   defaultFonts.forEach(font => {
     const option = document.createElement('option');
     option.value = font;
@@ -747,9 +629,7 @@ function loadSystemFonts() {
     }
     
     fontSelect.appendChild(option);
-  });
-  
-  
+  });  
   if (window.queryLocalFonts) {
     window.queryLocalFonts().then(fonts => {
       
@@ -790,24 +670,16 @@ function loadSystemFonts() {
 
 function applySettings() {
   
-  editor.style.fontFamily = fontFamily + ', serif, \'Vazir\''; 
-  
-  
+  editor.style.fontFamily = fontFamily + ', serif, \'Vazir\'';   
   document.documentElement.style.setProperty('--base-font-size', fontSize + '%');
-  editor.style.fontSize = 'calc(1.2rem * var(--base-font-size) / 100)';
-  
-  
+  editor.style.fontSize = 'var(--base-font-size)';  
   
   const baseSize = fontSize / 100;
   document.documentElement.style.setProperty('--h1-font-size', `calc(1.802rem * ${baseSize})`); 
   document.documentElement.style.setProperty('--h2-font-size', `calc(1.602rem * ${baseSize})`); 
   document.documentElement.style.setProperty('--h3-font-size', `calc(1.266rem * ${baseSize})`); 
-  document.documentElement.style.setProperty('--div-font-size', `calc(1rem * ${baseSize})`);
-  
-  
-  editor.style.maxWidth = editorWidth + 'px';
-  
-  
+  document.documentElement.style.setProperty('--div-font-size', `calc(1rem * ${baseSize})`);  
+  editor.style.maxWidth = editorWidth + 'px';  
   const headings = editor.querySelectorAll('h1, h2, h3');
   headings.forEach(heading => {
     if (heading.tagName === 'H1') {
@@ -823,18 +695,14 @@ function applySettings() {
     spans.forEach(span => {
       span.style.fontSize = 'inherit';
     });
-  });
-  
-  
+  });  
   const blockquotes = editor.querySelectorAll('blockquote');
   blockquotes.forEach(quote => {
     quote.style.fontSize = 'var(--div-font-size)';
     quote.style.lineHeight = '1.5';
     quote.style.paddingLeft = '1em';
     quote.style.borderLeft = '4px solid var(--border-color)';
-  });
-  
-  
+  });  
   applyBackground();
   updateBackgroundSelection();
 }
@@ -863,22 +731,16 @@ function updateBackgroundSelection() {
   const defaultBg = document.getElementById('default-bg');
   const customBg = document.getElementById('custom-bg');
   
-  if (!defaultBg || !customBg) return;
-  
-  
+  if (!defaultBg || !customBg) return;  
   defaultBg.classList.remove('selected');
-  customBg.classList.remove('selected');
-  
-  
+  customBg.classList.remove('selected');  
   if (useCustomBg && customBackground) {
     customBg.classList.add('selected');
   } else {
     defaultBg.classList.add('selected');
     
     useCustomBg = false;
-  }
-  
-  
+  }  
   if (customBackground) {
     customBg.classList.remove('hidden');
     customBg.style.backgroundImage = `url(${customBackground})`;
@@ -891,15 +753,11 @@ function updateBackgroundSelection() {
 
 function handleBackgroundUpload(e) {
   const file = e.target.files[0];
-  if (!file) return;
-  
-  
+  if (!file) return;  
   if (!file.type.startsWith('image/')) {
     alert('Please select an image file.');
     return;
-  }
-  
-  
+  }  
   const reader = new FileReader();
   reader.onload = function(event) {
     
@@ -966,20 +824,14 @@ function handleBackgroundUpload(e) {
     
     
     img.src = event.target.result;
-  };
-  
-  
-  reader.readAsDataURL(file);
-  
-  
+  };  
+  reader.readAsDataURL(file);  
   e.target.value = '';
 }
 
 function toggleSound() {
   const soundBtn = document.getElementById('sound-btn');
-  const volumePopup = document.getElementById('volume-popup');
-  
-  
+  const volumePopup = document.getElementById('volume-popup');  
   if (volumePopup.classList.contains('hidden')) {
     volumePopup.classList.remove('hidden');
     
@@ -1011,57 +863,38 @@ function updateSoundButton() {
 }
 
 function createNewDocument() {
-  
-  const newId = 'doc_' + Date.now();
-  
-  
-  documents[newId] = {
-    id: newId,
-    title: 'Untitled Document',
-    content: '',
-    created: new Date().toISOString(),
-    updated: new Date().toISOString()
-  };
-  
-  
-  currentDocumentId = newId;
-  
-  
-  saveDocumentsToStorage();
-  
-  
-  loadDocument(newId);
-  
-  
-  editor.focus();
+  if (confirm('Are you sure you want to create a new document? This action cannot be undone.')) {
+    const newId = 'doc_' + Date.now();  
+    documents[newId] = {
+      id: newId,
+      title: 'Untitled Document',
+      content: '',
+      created: new Date().toISOString(),
+      updated: new Date().toISOString()
+    };  
+    currentDocumentId = newId;  
+    saveDocumentsToStorage();  
+    loadDocument(newId);  
+    editor.focus();
+  }
 }
 
 function saveCurrentDocumentContent() {
-  if (!currentDocumentId) return;
-  
-  
-  const content = editor.innerHTML;
-  
-  
+  if (!currentDocumentId) return;  
+  const content = editor.innerHTML;  
   let title = 'Untitled Document';
   const firstLine = editor.textContent.trim().split('\n')[0];
   if (firstLine) {
     title = firstLine.substring(0, 20);
-  }
-  
-  
+  }  
   documents[currentDocumentId].title = title;
   documents[currentDocumentId].content = content;
-  documents[currentDocumentId].updated = new Date().toISOString();
-  
-  
+  documents[currentDocumentId].updated = new Date().toISOString();  
   saveDocumentsToStorage();
 }
 
 function saveCurrentDocument() {
-  if (!currentDocumentId) return;
-  
-  
+  if (!currentDocumentId) return;  
   const saveBtn = document.getElementById('save-btn');
   const originalText = saveBtn.textContent;
   saveBtn.textContent = 'Saved.';
@@ -1072,18 +905,12 @@ function saveCurrentDocument() {
 }
 
 function saveDocumentTitle(id, newTitle) {
-  if (!id || !documents[id]) return;
-  
-  
+  if (!id || !documents[id]) return;  
   if (!newTitle.trim()) {
     newTitle = 'Untitled Document';
-  }
-  
-  
+  }  
   documents[id].title = newTitle;
-  documents[id].updated = new Date().toISOString();
-  
-  
+  documents[id].updated = new Date().toISOString();  
   saveDocumentsToStorage();
 }
 
@@ -1093,39 +920,25 @@ function saveDocumentsToStorage() {
 }
 
 function loadDocument(id) {
-  if (!documents[id]) return;
-  
-  
-  currentDocumentId = id;
-  
-  
-  editor.innerHTML = documents[id].content;
-  
-  
-  updateCounter();
-  
-  
+  if (!documents[id]) return;  
+  currentDocumentId = id;  
+  editor.innerHTML = documents[id].content;  
+  updateCounter();  
   localStorage.setItem('focus_current_document', currentDocumentId);
 }
 
 function toggleDocumentsList() {
   
-  updateDocumentsList();
-  
-  
+  updateDocumentsList();  
   listPopup.classList.toggle('hidden');
 }
 
 function updateDocumentsList() {
   
-  documentsListElement.innerHTML = '';
-  
-  
+  documentsListElement.innerHTML = '';  
   const sortedDocs = Object.values(documents).sort((a, b) => {
     return new Date(b.updated) - new Date(a.updated);
-  });
-  
-  
+  });  
   sortedDocs.forEach(doc => {
     const docItem = document.createElement('div');
     docItem.className = 'document-item';
@@ -1258,9 +1071,7 @@ function updateDocumentsList() {
     });
     
     documentsListElement.appendChild(docItem);
-  });
-  
-  
+  });  
   if (sortedDocs.length === 0) {
     documentsListElement.innerHTML = '<div class="no-documents">No documents yet</div>';
   }
@@ -1273,15 +1084,9 @@ function formatDate(dateString) {
 
 function deleteDocument(id) {
   
-  delete documents[id];
-  
-  
-  saveDocumentsToStorage();
-  
-  
-  updateDocumentsList();
-  
-  
+  delete documents[id];  
+  saveDocumentsToStorage();  
+  updateDocumentsList();  
   if (id === currentDocumentId) {
     createNewDocument();
   }
@@ -1296,15 +1101,11 @@ function downloadDocument(id) {
   if (!documents[id]) return;
   
   const doc = documents[id];
-  const markdownContent = convertToMarkdown(doc.content);
-  
-  
+  const markdownContent = convertToMarkdown(doc.content);  
   const firstLine = markdownContent.split('\n')[0].replace(/^#\s+/, '').trim();
   const fileName = firstLine && firstLine.length > 0 ? 
     `${firstLine.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.md` : 
-    `${doc.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.md`;
-  
-  
+    `${doc.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.md`;  
   const blob = new Blob([markdownContent], {type: 'text/markdown'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1334,9 +1135,7 @@ function downloadAllDocuments() {
 
 function createAndDownloadZip() {
   const zip = new JSZip();
-  const docs = Object.values(documents);
-  
-  
+  const docs = Object.values(documents);  
   docs.forEach(doc => {
     
     const content = doc.content;
@@ -1350,9 +1149,7 @@ function createAndDownloadZip() {
     
     
     zip.file(fileName, markdown);
-  });
-  
-  
+  });  
   zip.generateAsync({type: 'blob'}).then(blob => {
     
     const url = URL.createObjectURL(blob);
@@ -1373,9 +1170,7 @@ function createAndDownloadZip() {
 function convertToMarkdown(html) {
   
   const temp = document.createElement('div');
-  temp.innerHTML = html;
-  
-  
+  temp.innerHTML = html;  
   function processNode(node) {
     let result = '';
     
@@ -1464,39 +1259,21 @@ function handleFileUpload(e) {
     loadDocument(newId);
   };
   
-  reader.readAsText(file);
-  
-  
+  reader.readAsText(file);  
   fileInput.value = '';
 }
 
 function convertMarkdownToHtml(markdown) {
-  let html = markdown;
-  
-  
-  html = html.replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1">');
-  
-  
+  let html = markdown;  
+  html = html.replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1">');  
   html = html.replace(/^# (.*$)/gm, '<h1 dir="auto">$1</h1>');
   html = html.replace(/^## (.*$)/gm, '<h2 dir="auto">$1</h2>');
-  html = html.replace(/^### (.*$)/gm, '<h3 dir="auto">$1</h3>');
-  
-  
-  html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-  
-  
-  html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
-  
-  
-  html = html.replace(/<u>(.*?)<\/u>/g, '<u>$1</u>');
-  
-  
-  html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>');
-  
-  
-  html = html.replace(/^> (.*$)/gm, '<blockquote dir="auto">$1</blockquote>');
-  
-  
+  html = html.replace(/^### (.*$)/gm, '<h3 dir="auto">$1</h3>');  
+  html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');  
+  html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');  
+  html = html.replace(/<u>(.*?)<\/u>/g, '<u>$1</u>');  
+  html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>');  
+  html = html.replace(/^> (.*$)/gm, '<blockquote dir="auto">$1</blockquote>');  
   html = html.replace(/^(?!<h|<blockquote|<img)(.*$)/gm, function(match) {
     if (match.trim() === '') return '';
     return '<p dir="auto">' + match + '</p>';
@@ -1507,9 +1284,7 @@ function convertMarkdownToHtml(markdown) {
 
 function updateCounter() {
   const text = editor.textContent;
-  const wordCount = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
-  
-  
+  const wordCount = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;  
   
   const paragraphText = editor.innerText.trim();
   const paragraphCount = paragraphText === '' ? 0 : paragraphText.split(/\n\s*\n+/).length;
@@ -1522,9 +1297,7 @@ function handleShortcuts(e) {
   if (e.ctrlKey && e.key === 's') {
     e.preventDefault();
     saveCurrentDocument();
-  }
-  
-  
+  }  
   if (e.ctrlKey && e.key === 'n') {
     e.preventDefault();
     createNewDocument();

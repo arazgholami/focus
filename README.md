@@ -1,5 +1,7 @@
 # Focus
 Focus is a simple, clean, and distraction-free writing app designed to help your thoughts flow without interruption—no ads, no servers, no clutter. Everything is stored locally on your device, and you can save, edit, and download your writings as Markdown files.
+<br>
+Demo: [https://arazgholami.github.io/focus/](https://arazgholami.github.io/focus/)
 
 ## Features
 * **Distraction-Free UI** Hides toolbars while typing to keep you focused on your content with Optional nostalgic typewriter sounds
