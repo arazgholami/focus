@@ -320,10 +320,6 @@ datalist {
   display: block;
 }
 
-#editor p {
-  margin-bottom: 1.5em;
-}
-
 #editor h1 *, #editor h2 *, #editor h3 *, #editor div {
   font-size: inherit !important;
 }
