@@ -306,7 +306,7 @@ datalist {
   width: 100%;
   outline: none;
   font-size: 1.2rem;
-  font-family: serif, 'Vazir';
+  font-family: 'Vazir';
   padding-top: 30px;
   min-height: 300px;
 }
@@ -337,6 +337,14 @@ datalist {
   line-height: 1.5;
   margin-top: 10px;
   margin-bottom: 1.5em;
+}
+
+#editor code {
+  font-size: var(--div-font-size, 1rem) !important;
+  font-family: monospace;
+  background-color: #f0f0f0;
+  padding: 2px 5px 4px;
+  color: black;
 }
 
 #formatting-popup {
@@ -533,17 +541,6 @@ datalist {
   text-decoration: none;
 }
 
-.formatting-shortcuts {
-  display: flex;
-  margin-left: 15px;
-}
-
-.shortcut {
-  margin-right: 10px;
-  font-size: 0.8rem;
-  color: #888;
-}
-
 .status-right {
   display: flex;
   align-items: center;
@@ -623,6 +620,7 @@ datalist {
 
 [dir="rtl"] {
   font-family: 'Vazir', serif;
+  text-align: right;
 }
 
 #editor h1 {
@@ -653,9 +651,13 @@ datalist {
   font-size: var(--div-font-size, 1rem) !important;
 }
 
-#editor div:dir(rtl) {
+#editor div:dir(rtl), #editor ul:dir(rtl), #editor ol:dir(rtl), #editor li:dir(rtl), #editor blockquote:dir(rtl) {
   font-size: calc(var(--div-font-size, 1rem) * 0.95) !important;
   line-height: 26px !important;
+}
+
+#editor div:dir(rtl), #editor li:dir(rtl), #editor blockquote:dir(rtl) {
+  text-align: right;
 }
 
 .popup-header {

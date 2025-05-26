@@ -8,7 +8,7 @@
   <link rel="icon" href="focus-icon.png" type="image/png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="style.css?ver=1.0.1">
+  <link rel="stylesheet" href="style.css?A4">
 </head>
 <body>
   <div id="app">
@@ -28,7 +28,7 @@
       </div>
     </div>
 
-    <div id="editor" contenteditable="true" spellcheck="true" dir="auto" placeholder="What's in your mind?"></div>
+    <div id="editor"></div>
     
     <div id="formatting-popup" class="hidden">
       <button id="format-bold" title="Bold"><i class="fas fa-bold"></i></button>
@@ -112,11 +112,6 @@
         <a href="https://github.com/arazgholami/focus" target="_blank" class="status-link">Github</a>
         <a href="mailto:contact@arazgholami.com" target="_blank" class="status-link">Contact</a>
         <a href="https://buymeacoffee.com/arazgholami" target="_blank" class="status-link">Donate</a>
-        <div class="formatting-shortcuts">
-          <span class="shortcut"><i class="fas fa-bold"></i> Ctrl+B</span>
-          <span class="shortcut"><i class="fas fa-italic"></i> Ctrl+I</span>
-          <span class="shortcut"><i class="fas fa-underline"></i> Ctrl+U</span>
-        </div>
       </div>
       <div class="status-right">
         <div id="counter"></div>
@@ -128,6 +123,7 @@
   <input type="file" id="file-input" accept=".md,.txt" style="display: none;">
   <input type="file" id="bg-file-input" accept="image/*" style="display: none;">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-  <script src="script.js?ver=1.0.0"></script>
+  <script src="wysiwyg-markdown-editor.js"></script>
+  <script src="script.js?ver=A1"></script>
 </body>
 </html>

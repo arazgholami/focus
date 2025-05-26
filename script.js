@@ -14,10 +14,14 @@ let editorWidth = 830;
 let systemFonts = []; 
 let useCustomBg = false; 
 
+MarkdownEditor.init('editor', {
+  placeholder: 'What\'s in you mind?',
+  autofocus: true
+});
+
 const editor = document.getElementById('editor');
 const toolbar = document.getElementById('toolbar');
 const statusBar = document.getElementById('status-bar');
-const formattingPopup = document.getElementById('formatting-popup');
 const settingsPopup = document.getElementById('settings-popup');
 const counter = document.getElementById('counter');
 const listPopup = document.getElementById('list-popup');
@@ -48,7 +52,6 @@ function init() {
   } else {
     createNewDocument();
   }  
-  setupEventListeners();  
   updateCounter();  
   applyTheme();  
   applyBackground();
@@ -128,144 +131,6 @@ function loadPreferences() {
   applySettings();
 }
 
-function setupEventListeners() {
-  
-  editor.addEventListener('input', handleInput);
-  editor.addEventListener('keydown', handleKeyDown);
-  editor.addEventListener('mouseup', handleTextSelection);
-  editor.addEventListener('dblclick', handleDoubleClick);
-  
-  editor.addEventListener('input', () => {
-    if (editor.textContent.trim() === '') {
-      editor.textContent = '';
-    }
-  });
-  editor.addEventListener('blur', () => {
-    setTimeout(() => {
-      if (!formattingPopup.contains(document.activeElement)) {
-        formattingPopup.classList.add('hidden');
-      }
-    }, 100);
-  });  
-  editor.addEventListener('click', (e) => {
-    
-    if ((e.ctrlKey || e.metaKey) && e.target.tagName === 'A') {
-      e.preventDefault();
-      window.open(e.target.href, '_blank');
-    }
-  });  
-  document.getElementById('fullscreen-btn').addEventListener('click', toggleFullscreen);
-  document.getElementById('list-btn').addEventListener('click', toggleDocumentsList);
-  document.getElementById('sound-btn').addEventListener('click', toggleSound);
-  document.getElementById('settings-btn').addEventListener('click', toggleSettings);
-  document.getElementById('load-btn').addEventListener('click', () => fileInput.click());
-  document.getElementById('download-btn').addEventListener('click', downloadCurrentDocument);  
-  document.getElementById('theme-toggle').addEventListener('click', toggleDarkMode);  
-  document.getElementById('volume-slider').addEventListener('input', function() {
-    soundVolume = this.value / 100;
-    updateSoundButton();
-    localStorage.setItem('focus_sound_volume', soundVolume);
-    
-    
-    document.getElementById('volume-value').textContent = Math.round(soundVolume * 100) + '%';
-  });  
-  document.addEventListener('click', function(e) {
-    
-    const volumePopup = document.getElementById('volume-popup');
-    const soundBtn = document.getElementById('sound-btn');
-    
-    if (volumePopup && !volumePopup.classList.contains('hidden') && 
-        !volumePopup.contains(e.target) && e.target !== soundBtn && !soundBtn.contains(e.target)) {
-      volumePopup.classList.add('hidden');
-    }
-    
-    
-    const settingsBtn = document.getElementById('settings-btn');
-    
-    if (settingsPopup && !settingsPopup.classList.contains('hidden') && 
-        !settingsPopup.contains(e.target) && e.target !== settingsBtn && !settingsBtn.contains(e.target)) {
-      settingsPopup.classList.add('hidden');
-    }
-  });  
-  document.getElementById('new-btn').addEventListener('click', createNewDocument);
-  document.getElementById('save-btn').addEventListener('click', saveCurrentDocument);  
-  document.getElementById('format-bold').addEventListener('click', () => formatText('bold'));
-  document.getElementById('format-italic').addEventListener('click', () => formatText('italic'));
-  document.getElementById('format-underline').addEventListener('click', () => formatText('underline'));
-  document.getElementById('format-h1').addEventListener('click', () => formatText('h1'));
-  document.getElementById('format-h2').addEventListener('click', () => formatText('h2'));
-  document.getElementById('format-h3').addEventListener('click', () => formatText('h3'));
-  document.getElementById('format-quote').addEventListener('click', () => formatText('blockquote'));
-  document.getElementById('format-link').addEventListener('click', () => formatText('link'));
-  document.getElementById('format-unlink').addEventListener('click', () => formatText('unlink'));  
-  document.getElementById('close-list').addEventListener('click', () => listPopup.classList.add('hidden'));
-  document.getElementById('download-all-btn').addEventListener('click', downloadAllDocuments);  
-  document.getElementById('close-settings').addEventListener('click', () => settingsPopup.classList.add('hidden'));  
-  document.getElementById('font-family-select').addEventListener('change', function() {
-    fontFamily = this.value;
-    localStorage.setItem('focus_font_family', fontFamily);
-    applySettings();
-  });  
-  document.getElementById('font-size-slider').addEventListener('input', function() {
-    fontSize = parseInt(this.value);
-    updateFontSizeLabel();
-    localStorage.setItem('focus_font_size', fontSize);
-    applySettings();
-  });  
-  document.getElementById('editor-width-input').addEventListener('change', function() {
-    editorWidth = parseInt(this.value);
-    localStorage.setItem('focus_editor_width', editorWidth);
-    applySettings();
-  });  
-  document.getElementById('default-bg').addEventListener('click', function() {
-    useCustomBg = false;
-    localStorage.setItem('focus_use_custom_bg', 'false');
-    updateBackgroundSelection();
-    applyBackground();
-  });
-  
-  document.getElementById('custom-bg').addEventListener('click', function() {
-    if (customBackground) {
-      useCustomBg = true;
-      localStorage.setItem('focus_use_custom_bg', 'true');
-      updateBackgroundSelection();
-      applyBackground();
-    }
-  });
-  
-  document.getElementById('upload-bg-btn').addEventListener('click', function() {
-    document.getElementById('bg-file-input').click();
-  });
-  
-  document.getElementById('bg-file-input').addEventListener('change', handleBackgroundUpload);  
-  fileInput.addEventListener('change', handleFileUpload);  
-  window.addEventListener('resize', positionFormattingPopup);
-  window.addEventListener('scroll', () => {
-    if (isTyping) return;
-    positionFormattingPopup();
-  });  
-  document.addEventListener('keydown', handleShortcuts);
-}
-
-function handleInput() {
-  
-  isTyping = true;  
-  toolbar.classList.add('hidden');
-  statusBar.classList.add('hidden');  
-  clearTimeout(typingTimer);  
-  typingTimer = setTimeout(() => {
-    isTyping = false;
-    toolbar.classList.remove('hidden');
-    statusBar.classList.remove('hidden');
-    
-    
-    saveCurrentDocumentContent();
-    
-    
-    updateCounter();
-  }, 1500);  
-  setDirectionForParagraphs();
-}
 
 function handleKeyDown(e) {
   if (!soundEnabled) return;  
@@ -298,233 +163,6 @@ function playSound(type) {
   }
 }
 
-function handleTextSelection() {
-  const selection = window.getSelection();
-  
-  if (selection.toString().trim().length > 0 && selection.rangeCount > 0) {
-    const range = selection.getRangeAt(0);
-    const rect = range.getBoundingClientRect();
-    
-    
-    formattingPopup.style.top = `${rect.top - formattingPopup.offsetHeight - 10}px`;
-    formattingPopup.style.left = `${rect.left + (rect.width / 2) - (formattingPopup.offsetWidth / 2)}px`;
-    formattingPopup.classList.remove('hidden');
-    
-    
-    checkActiveFormattingStyles();
-  } else {
-    formattingPopup.classList.add('hidden');
-  }
-}
-
-function handleDoubleClick(e) {
-  
-  e.preventDefault();
-  
-  const selection = window.getSelection();  
-  if (selection.toString().trim().length > 0) {
-    formattingPopup.classList.remove('hidden');
-    checkActiveFormattingStyles();
-    positionFormattingPopup();
-    return;
-  }   
-  if (e.target === editor || 
-      (e.target.tagName === 'P' && e.target.textContent.trim() === '') ||
-      (e.target.tagName === 'DIV' && e.target.id === 'editor') ||
-      (e.target === document.body && editor.contains(selection.anchorNode))) {
-    
-    
-    const range = document.caretRangeFromPoint(e.clientX, e.clientY);
-    if (range) {
-      selection.removeAllRanges();
-      selection.addRange(range);
-      
-      
-      if (editor.innerHTML.trim() === '') {
-        editor.innerHTML = '<p><br></p>';
-        const newRange = document.createRange();
-        newRange.setStart(editor.querySelector('p'), 0);
-        newRange.collapse(true);
-        selection.removeAllRanges();
-        selection.addRange(newRange);
-      }
-    }
-    
-    
-    formattingPopup.classList.remove('hidden');
-    checkActiveFormattingStyles();
-    positionFormattingPopup();
-  }
-}
-
-function checkActiveFormattingStyles() {
-  const boldButton = document.getElementById('format-bold');
-  const italicButton = document.getElementById('format-italic');
-  const underlineButton = document.getElementById('format-underline');
-  const h1Button = document.getElementById('format-h1');
-  const h2Button = document.getElementById('format-h2');
-  const h3Button = document.getElementById('format-h3');
-  const quoteButton = document.getElementById('format-quote');
-  const linkButton = document.getElementById('format-link');
-  const unlinkButton = document.getElementById('format-unlink');  
-  boldButton.classList.remove('active');
-  italicButton.classList.remove('active');
-  underlineButton.classList.remove('active');
-  h1Button.classList.remove('active');
-  h2Button.classList.remove('active');
-  h3Button.classList.remove('active');
-  quoteButton.classList.remove('active');
-  linkButton.classList.remove('active');  
-  if (unlinkButton) {
-    unlinkButton.style.display = 'none';
-  }  
-  if (document.queryCommandState('bold')) {
-    boldButton.classList.add('active');
-  }
-  
-  if (document.queryCommandState('italic')) {
-    italicButton.classList.add('active');
-  }
-  
-  if (document.queryCommandState('underline')) {
-    underlineButton.classList.add('active');
-  }  
-  const selection = window.getSelection();
-  if (selection.rangeCount > 0) {
-    const parentNode = selection.anchorNode.parentNode;
-    const parentTagName = parentNode.tagName ? parentNode.tagName.toLowerCase() : '';
-    
-    
-    if (parentTagName === 'h1' || parentNode.closest('h1')) {
-      h1Button.classList.add('active');
-    } else if (parentTagName === 'h2' || parentNode.closest('h2')) {
-      h2Button.classList.add('active');
-    } else if (parentTagName === 'h3' || parentNode.closest('h3')) {
-      h3Button.classList.add('active');
-    } else if (parentTagName === 'blockquote' || parentNode.closest('blockquote')) {
-      quoteButton.classList.add('active');
-    }
-    
-    
-    const isLink = parentTagName === 'a' || parentNode.closest('a');
-    if (isLink) {
-      linkButton.classList.add('active');
-      
-      
-      if (unlinkButton) {
-        unlinkButton.style.display = 'inline-block';
-      }
-    }
-  }
-}
-
-function positionFormattingPopup() {
-  const selection = window.getSelection();
-  
-  if (selection.toString().trim().length > 0 && selection.rangeCount > 0) {
-    const range = selection.getRangeAt(0);
-    const rect = range.getBoundingClientRect();
-    
-    formattingPopup.style.top = `${rect.top - formattingPopup.offsetHeight - 10}px`;
-    formattingPopup.style.left = `${rect.left + (rect.width / 2) - (formattingPopup.offsetWidth / 2)}px`;
-  }
-}
-
-function formatText(format) {
-  const selection = window.getSelection();
-  
-  if (selection.toString().trim().length === 0 && format !== 'unlink') {
-    return;
-  }  
-  const range = selection.getRangeAt(0);
-  const selectedText = selection.toString();  
-  const parentNode = selection.anchorNode.parentNode;
-  const parentTagName = parentNode.tagName ? parentNode.tagName.toLowerCase() : '';
-  const isFormatActive = 
-    (format === 'h1' && (parentTagName === 'h1' || parentNode.closest('h1'))) ||
-    (format === 'h2' && (parentTagName === 'h2' || parentNode.closest('h2'))) ||
-    (format === 'h3' && (parentTagName === 'h3' || parentNode.closest('h3'))) ||
-    (format === 'blockquote' && (parentTagName === 'blockquote' || parentNode.closest('blockquote')));  
-  let linkNode = null;
-  if (format === 'link' || format === 'unlink') {
-    linkNode = parentTagName === 'a' ? parentNode : parentNode.closest('a');
-  }
-  
-  switch (format) {
-    case 'bold':
-      document.execCommand('bold', false, null);
-      break;
-    case 'italic':
-      document.execCommand('italic', false, null);
-      break;
-    case 'underline':
-      document.execCommand('underline', false, null);
-      break;
-    case 'h1':
-    case 'h2':
-    case 'h3':
-      if (isFormatActive) {
-        
-        document.execCommand('formatBlock', false, '<p>');
-      } else {
-        
-        document.execCommand('formatBlock', false, `<${format}>`);
-      }
-      
-      setTimeout(() => setDirectionForParagraphs(), 0);
-      break;
-    case 'blockquote':
-      if (isFormatActive) {
-        
-        document.execCommand('formatBlock', false, '<p>');
-      } else {
-        
-        document.execCommand('formatBlock', false, '<blockquote>');
-      }
-      
-      setTimeout(() => setDirectionForParagraphs(), 0);
-      break;
-    case 'unlink':
-      if (linkNode) {
-        document.execCommand('unlink', false, null);
-      }
-      break;
-    case 'link':
-      
-      let initialUrl = 'https://';
-      if (linkNode) {
-        initialUrl = linkNode.getAttribute('href') || 'https://';
-      }
-      
-      const url = prompt('Enter URL:', initialUrl);
-      if (url) {
-        document.execCommand('createLink', false, url);
-        
-        
-        setTimeout(() => {
-          const links = editor.querySelectorAll('a');
-          links.forEach(link => {
-            if (!link.hasAttribute('data-link-handler')) {
-              link.setAttribute('data-link-handler', 'true');
-            }
-          });
-        }, 0);
-      }
-      break;
-  }  
-  formattingPopup.classList.add('hidden');  
-  saveCurrentDocumentContent();
-}
-
-function setDirectionForParagraphs() {
-  const paragraphs = editor.querySelectorAll('div, p, h1, h2, h3, blockquote');
-  
-  paragraphs.forEach(p => {
-    if (!p.hasAttribute('dir')) {
-      p.setAttribute('dir', 'auto');
-    }
-  });
-}
 
 function toggleFullscreen() {
   if (!isFullscreen) {
@@ -1269,8 +907,12 @@ function convertMarkdownToHtml(markdown) {
   html = html.replace(/^# (.*$)/gm, '<h1 dir="auto">$1</h1>');
   html = html.replace(/^## (.*$)/gm, '<h2 dir="auto">$1</h2>');
   html = html.replace(/^### (.*$)/gm, '<h3 dir="auto">$1</h3>');  
+  html = html.replace(/^#### (.*$)/gm, '<h4 dir="auto">$1</h4>');  
+  html = html.replace(/^##### (.*$)/gm, '<h5 dir="auto">$1</h5>');  
+  html = html.replace(/^---\s*$/g, '<hr>');  
   html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');  
   html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');  
+  html = html.replace(/<u>(.*?)<\/u>/g, '<u>$1</u>');  
   html = html.replace(/<u>(.*?)<\/u>/g, '<u>$1</u>');  
   html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>');  
   html = html.replace(/^> (.*$)/gm, '<blockquote dir="auto">$1</blockquote>');  
