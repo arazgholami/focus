@@ -59,8 +59,6 @@ class MarkdownEditor {
     handleKeyDown(e) {
         if (e.key === 'Backspace') {
             this.handleBackspace(e);
-        } else if (e.key === 'ArrowDown') {
-            this.handleArrowDown(e);
         } else if (e.key === 'Enter') {
             e.preventDefault();
             const selection = window.getSelection();
@@ -400,35 +398,10 @@ class MarkdownEditor {
         }
     }
 
-    handleArrowDown(e) {
-        const selection = window.getSelection();
-        if (selection.rangeCount === 0) return;
-
-        const range = selection.getRangeAt(0);
-        const element = range.startContainer.parentElement;
-
-        if (this.isStyledElement(element)) {
-            e.preventDefault();
-
-            const div = document.createElement('div');
-            div.setAttribute('dir', 'auto');
-            div.innerHTML = '<br>';
-
-            if (element.nextSibling) {
-                element.parentNode.insertBefore(div, element.nextSibling);
-            } else {
-                element.parentNode.appendChild(div);
-            }
-
-            this.setCursorAtEnd(div);
-        }
-    }
-
     isStyledElement(element) {
         return ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'STRONG', 'EM', 'U', 'CODE', 'LI', 'BLOCKQUOTE', 'A', 'IMG', 'HR'].includes(element.tagName);
     }
 
-    
     convertToMarkdown(element) {
         const text = element.textContent;
         let markdown = '';

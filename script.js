@@ -14,6 +14,20 @@ let editorWidth = 830;
 let systemFonts = []; 
 let useCustomBg = false; 
 
+// Add function to handle typing state
+function handleTypingState() {
+  isTyping = true;
+  toolbar.classList.add('hidden');
+  statusBar.classList.add('hidden');
+  
+  clearTimeout(typingTimer);
+  typingTimer = setTimeout(() => {
+    isTyping = false;
+    toolbar.classList.remove('hidden');
+    statusBar.classList.remove('hidden');
+  }, 2000); // Show UI elements after 2 seconds of no typing
+}
+
 MarkdownEditor.init('editor', {
   placeholder: 'What\'s in you mind?',
   autofocus: true
@@ -27,6 +41,32 @@ const counter = document.getElementById('counter');
 const listPopup = document.getElementById('list-popup');
 const documentsListElement = document.getElementById('documents-list');
 const fileInput = document.getElementById('file-input');
+
+// Add input event listener for typing
+editor.addEventListener('input', () => {
+  handleTypingState();
+  updateCounter();
+  
+  clearTimeout(typingTimer);
+  typingTimer = setTimeout(() => {
+    saveCurrentDocumentContent();
+  }, 1000);
+});
+
+// Add mouse movement event listener to show UI elements
+document.addEventListener('mousemove', () => {
+  toolbar.classList.remove('hidden');
+  statusBar.classList.remove('hidden');
+  
+  // Reset the typing timer to keep UI visible
+  if (isTyping) {
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(() => {
+      isTyping = false;
+    }, 2000);
+  }
+});
+
 editor.addEventListener('keydown', handleKeyDown);
 
 const sounds = {
@@ -234,6 +274,11 @@ function toggleSettings() {
   settingsPopup.classList.toggle('hidden');
 }
 
+function toggleManual() {
+  const manualPopup = document.getElementById('manual-popup');
+  manualPopup.classList.toggle('hidden');
+}
+
 function loadSystemFonts() {
   const fontSelect = document.getElementById('font-family-select');  
   fontSelect.innerHTML = '';  
@@ -308,40 +353,48 @@ function loadSystemFonts() {
 }
 
 function applySettings() {
+  // Set base font family
+  document.documentElement.style.setProperty('--editor-font-family', fontFamily);
+  editor.style.fontFamily = `var(--editor-font-family), serif, 'Vazir'`;
   
-  editor.style.fontFamily = fontFamily + ', serif, \'Vazir\'';   
+  // Set base font size
   document.documentElement.style.setProperty('--base-font-size', fontSize + '%');
-  editor.style.fontSize = 'var(--base-font-size)';  
+  editor.style.fontSize = 'var(--base-font-size)';
   
+  // Calculate relative sizes
   const baseSize = fontSize / 100;
-  document.documentElement.style.setProperty('--h1-font-size', `calc(1.802rem * ${baseSize})`); 
-  document.documentElement.style.setProperty('--h2-font-size', `calc(1.602rem * ${baseSize})`); 
-  document.documentElement.style.setProperty('--h3-font-size', `calc(1.266rem * ${baseSize})`); 
-  document.documentElement.style.setProperty('--div-font-size', `calc(1rem * ${baseSize})`);  
-  editor.style.maxWidth = editorWidth + 'px';  
-  const headings = editor.querySelectorAll('h1, h2, h3');
-  headings.forEach(heading => {
-    if (heading.tagName === 'H1') {
-      heading.style.fontSize = 'var(--h1-font-size)';
-    } else if (heading.tagName === 'H2') {
-      heading.style.fontSize = 'var(--h2-font-size)';
-    } else if (heading.tagName === 'H3') {
-      heading.style.fontSize = 'var(--h3-font-size)';
+  document.documentElement.style.setProperty('--h1-font-size', `calc(1.802rem * ${baseSize})`);
+  document.documentElement.style.setProperty('--h2-font-size', `calc(1.602rem * ${baseSize})`);
+  document.documentElement.style.setProperty('--h3-font-size', `calc(1.266rem * ${baseSize})`);
+  document.documentElement.style.setProperty('--div-font-size', `calc(1rem * ${baseSize})`);
+  
+  // Set editor width
+  editor.style.maxWidth = editorWidth + 'px';
+  
+  // Apply font sizes to all elements
+  const allElements = editor.querySelectorAll('*');
+  allElements.forEach(element => {
+    if (element.tagName === 'H1') {
+      element.style.fontSize = 'var(--h1-font-size)';
+    } else if (element.tagName === 'H2') {
+      element.style.fontSize = 'var(--h2-font-size)';
+    } else if (element.tagName === 'H3') {
+      element.style.fontSize = 'var(--h3-font-size)';
+    } else if (element.tagName === 'H4') {
+      element.style.fontSize = 'calc(var(--h3-font-size) * 0.9)';
+    } else if (element.tagName === 'H5') {
+      element.style.fontSize = 'calc(var(--h3-font-size) * 0.8)';
+    } else if (element.tagName === 'H6') {
+      element.style.fontSize = 'calc(var(--h3-font-size) * 0.7)';
+    } else if (element.tagName === 'DIV' || 
+               element.tagName === 'P' || 
+               element.tagName === 'LI' || 
+               element.tagName === 'BLOCKQUOTE') {
+      element.style.fontSize = 'var(--div-font-size)';
     }
-    
-    
-    const spans = heading.querySelectorAll('span');
-    spans.forEach(span => {
-      span.style.fontSize = 'inherit';
-    });
-  });  
-  const blockquotes = editor.querySelectorAll('blockquote');
-  blockquotes.forEach(quote => {
-    quote.style.fontSize = 'var(--div-font-size)';
-    quote.style.lineHeight = '1.5';
-    quote.style.paddingLeft = '1em';
-    quote.style.borderLeft = '4px solid var(--border-color)';
-  });  
+  });
+  
+  // Apply background and theme
   applyBackground();
   updateBackgroundSelection();
 }
@@ -807,58 +860,110 @@ function createAndDownloadZip() {
 }
 
 function convertToMarkdown(html) {
-  
   const temp = document.createElement('div');
-  temp.innerHTML = html;  
-  function processNode(node) {
-    let result = '';
-    
+  temp.innerHTML = html;
+
+  function processNode(node, context = {}) {
     if (node.nodeType === Node.TEXT_NODE) {
       return node.textContent;
     } else if (node.nodeType === Node.ELEMENT_NODE) {
       const tagName = node.tagName.toLowerCase();
-      const childContent = Array.from(node.childNodes).map(child => processNode(child)).join('');
-      
+
+      // Create new context for nested ordered lists
+      if (tagName === 'ol') {
+        context.olCounter = 1;
+      }
+
+      const childContent = Array.from(node.childNodes)
+        .map(child => processNode(child, context))
+        .join('');
+
       switch (tagName) {
-        case 'h1':
-          return `# ${childContent}\n\n`;
-        case 'h2':
-          return `## ${childContent}\n\n`;
-        case 'h3':
-          return `### ${childContent}\n\n`;
-        case 'p':
-          return `${childContent}\n\n`;
-        case 'blockquote':
-          return `> ${childContent}\n\n`;
+        case 'h1': return `# ${childContent}`;
+        case 'h2': return `## ${childContent}`;
+        case 'h3': return `### ${childContent}`;
+        case 'h4': return `#### ${childContent}`;
+        case 'h5': return `##### ${childContent}`;
+        case 'h6': return `###### ${childContent}`;
+        case 'blockquote': return `> ${childContent}`;
         case 'strong':
-        case 'b':
-          return `**${childContent}**`;
+        case 'b': return `**${childContent}**`;
         case 'em':
-        case 'i':
-          return `*${childContent}*`;
-        case 'u':
-          return `<u>${childContent}</u>`;
+        case 'i': return `*${childContent}*`;
+        case 'u': return `__${childContent}__`;
+        case 'code': return `\`${childContent}\``;
         case 'a':
-          return `[${childContent}](${node.getAttribute('href')})`;
-        case 'br':
-          return '\n';
+          const href = node.getAttribute('href') || '';
+          return `[${childContent}](${href})`;
         case 'img':
-          return `![${node.getAttribute('alt') || ''}](${node.getAttribute('src')})`;
+          const alt = node.getAttribute('alt') || '';
+          const src = node.getAttribute('src') || '';
+          return `![${alt}](${src})`;
+        case 'hr': return `---`;
+        case 'ul':
+        case 'ol':
+          return '\n' + childContent.trim() + '\n';
+        case 'li':
+          const parentList = node.parentElement?.tagName.toLowerCase();
+          if (parentList === 'ol') {
+            const number = context.olCounter || 1;
+            context.olCounter = number + 1;
+            return `${number}. ${childContent}\n`;
+          } else {
+            return `- ${childContent}\n`;
+          }
+        case 'div':
+          const checkbox = node.querySelector('input[type="checkbox"]');
+          if (checkbox) {
+            const textContent = Array.from(node.childNodes)
+              .filter(child => child.nodeType === Node.TEXT_NODE || 
+                               (child.nodeType === Node.ELEMENT_NODE && child.tagName.toLowerCase() !== 'input'))
+              .map(child => child.nodeType === Node.TEXT_NODE ? child.textContent : child.textContent)
+              .join('')
+              .trim();
+            return `[${checkbox.checked ? 'x' : ' '}] ${textContent}`;
+          }
+          return childContent;
+        case 'input':
+          return '';
+        case 'br':
+          return '';
+        case 'p':
+          return childContent + '\n';
         default:
           return childContent;
       }
     }
-    
-    return result;
+    return '';
   }
-  
+
   let markdown = '';
-  Array.from(temp.childNodes).forEach(node => {
-    markdown += processNode(node);
-  });
-  
-  return markdown;
+  const children = Array.from(temp.childNodes);
+
+  for (let i = 0; i < children.length; i++) {
+    const node = children[i];
+    const result = processNode(node);
+    if (result.trim() || (node.nodeType === Node.ELEMENT_NODE && node.tagName.toLowerCase() === 'hr')) {
+      if (markdown && !markdown.endsWith('\n') && 
+          node.nodeType === Node.ELEMENT_NODE &&
+          ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'hr', 'div', 'p'].includes(node.tagName.toLowerCase())) {
+        markdown += '\n';
+      }
+      markdown += result;
+
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        if (node.tagName.toLowerCase() === 'hr') {
+          markdown += '\n\n';
+        } else if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'li', 'div', 'p'].includes(node.tagName.toLowerCase())) {
+          markdown += '\n';
+        }
+      }
+    }
+  }
+
+  return markdown.replace(/\n{3,}/g, '\n\n').trim();
 }
+
 
 function handleFileUpload(e) {
   const file = e.target.files[0];
@@ -902,32 +1007,131 @@ function handleFileUpload(e) {
 }
 
 function convertMarkdownToHtml(markdown) {
-  let html = markdown;  
-  html = html.replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1">');  
-  html = html.replace(/^# (.*$)/gm, '<h1 dir="auto">$1</h1>');
-  html = html.replace(/^## (.*$)/gm, '<h2 dir="auto">$1</h2>');
-  html = html.replace(/^### (.*$)/gm, '<h3 dir="auto">$1</h3>');  
-  html = html.replace(/^#### (.*$)/gm, '<h4 dir="auto">$1</h4>');  
-  html = html.replace(/^##### (.*$)/gm, '<h5 dir="auto">$1</h5>');  
-  html = html.replace(/^---\s*$/g, '<hr>');  
-  html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');  
-  html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');  
-  html = html.replace(/<u>(.*?)<\/u>/g, '<u>$1</u>');  
-  html = html.replace(/<u>(.*?)<\/u>/g, '<u>$1</u>');  
-  html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>');  
-  html = html.replace(/^> (.*$)/gm, '<blockquote dir="auto">$1</blockquote>');  
-  html = html.replace(/^(?!<h|<blockquote|<img)(.*$)/gm, function(match) {
-    if (match.trim() === '') return '';
-    return '<p dir="auto">' + match + '</p>';
-  });
-  
+  // Split the markdown into lines
+  const lines = markdown.split('\n');
+  let html = '';
+  let inList = false;
+  let listType = '';
+  let listItems = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    
+    // Skip empty lines
+    if (!line) {
+      if (inList) {
+        html += `<${listType} dir="auto">${listItems.join('')}</${listType}>`;
+        inList = false;
+        listItems = [];
+      }
+      html += '<div dir="auto"><br></div>';
+      continue;
+    }
+
+    // Headers
+    if (line.startsWith('#')) {
+      const level = line.match(/^#+/)[0].length;
+      const content = line.replace(/^#+\s*/, '');
+      html += `<h${level} dir="auto">${content}</h${level}>`;
+      continue;
+    }
+
+    // Blockquotes
+    if (line.startsWith('>')) {
+      const content = line.replace(/^>\s*/, '');
+      html += `<blockquote dir="auto">${content}</blockquote>`;
+      continue;
+    }
+
+    // Horizontal Rule
+    if (line === '---') {
+      html += '<hr>';
+      continue;
+    }
+
+    // Checkboxes
+    if (line.match(/^\[[ x]\]\s/)) {
+      const checked = line[1] === 'x';
+      const content = line.replace(/^\[[ x]\]\s*/, '');
+      html += `<div dir="auto"><input type="checkbox" ${checked ? 'checked' : ''} dir="auto"> ${content}</div>`;
+      continue;
+    }
+
+    // Ordered Lists
+    if (line.match(/^\d+\.\s/)) {
+      if (!inList || listType !== 'ol') {
+        if (inList) {
+          html += `<${listType} dir="auto">${listItems.join('')}</${listType}>`;
+        }
+        inList = true;
+        listType = 'ol';
+        listItems = [];
+      }
+      const content = line.replace(/^\d+\.\s*/, '');
+      listItems.push(`<li dir="auto">${content}</li>`);
+      continue;
+    }
+
+    // Unordered Lists
+    if (line.startsWith('- ')) {
+      if (!inList || listType !== 'ul') {
+        if (inList) {
+          html += `<${listType} dir="auto">${listItems.join('')}</${listType}>`;
+        }
+        inList = true;
+        listType = 'ul';
+        listItems = [];
+      }
+      const content = line.replace(/^-\s*/, '');
+      listItems.push(`<li dir="auto">${content}</li>`);
+      continue;
+    }
+
+    // Process inline markdown
+    let processedLine = line
+      // Bold
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      // Italic
+      .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>')
+      // Underline
+      .replace(/__(.+?)__/g, '<u>$1</u>')
+      // Inline Code
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      // Links
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
+      // Images
+      .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
+
+    html += `<div dir="auto">${processedLine}</div>`;
+  }
+
+  // Close any open list
+  if (inList) {
+    html += `<${listType} dir="auto">${listItems.join('')}</${listType}>`;
+  }
+
   return html;
 }
 
 function updateCounter() {
-  const text = editor.textContent || '';
-  const words = text.trim().split(/\s+/).filter(word => word.length > 0);
-  const wordCount = text.trim() === '' ? 0 : words.length;
+  // Get all text nodes recursively from the editor
+  const textNodes = [];
+  const walk = document.createTreeWalker(
+    editor,
+    NodeFilter.SHOW_TEXT,
+    null,
+    false
+  );
+  
+  let node;
+  while (node = walk.nextNode()) {
+    textNodes.push(node.textContent);
+  }
+  
+  // Join all text nodes and normalize whitespace
+  const text = textNodes.join(' ').replace(/\s+/g, ' ').trim();
+  const words = text.split(/\s+/).filter(word => word.length > 0);
+  const wordCount = text === '' ? 0 : words.length;
   
   counter.textContent = `${wordCount} words`;
 }
@@ -1005,6 +1209,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('list-btn').addEventListener('click', toggleDocumentsList);
   document.getElementById('sound-btn').addEventListener('click', toggleSound);
   document.getElementById('settings-btn').addEventListener('click', toggleSettings);
+  document.getElementById('manual-btn').addEventListener('click', toggleManual);
   document.getElementById('load-btn').addEventListener('click', () => fileInput.click());
   document.getElementById('download-btn').addEventListener('click', downloadCurrentDocument);
   
@@ -1015,6 +1220,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Add event listeners for popup close buttons
   document.getElementById('close-list').addEventListener('click', () => listPopup.classList.add('hidden'));
   document.getElementById('close-settings').addEventListener('click', () => settingsPopup.classList.add('hidden'));
+  document.getElementById('close-manual').addEventListener('click', () => document.getElementById('manual-popup').classList.add('hidden'));
   
   // Add event listeners for file inputs
   fileInput.addEventListener('change', handleFileUpload);

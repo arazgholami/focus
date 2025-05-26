@@ -1,4 +1,10 @@
 <!DOCTYPE html>
+<!-- 
+  Focus is a simple, clean, and distraction-free writing app designed to help your thoughts flow without interruption—no ads, no servers, no clutter. Everything is stored locally on your device, and you can save, edit, and download your writings as Markdown files.
+  Version 2.0.0
+  Author: Araz Gholami @arazgholami
+  Email: contact@arazgholami.com
+-->
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -8,7 +14,7 @@
   <link rel="icon" href="focus-icon.png" type="image/png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="style.css?A4">
+  <link rel="stylesheet" href="style.css?v2.0.0">
 </head>
 <body>
   <div id="app">
@@ -17,6 +23,7 @@
       <button id="list-btn" title="Your Writings"><i class="fas fa-list"></i></button>
       <button id="sound-btn" title="Volume Control"><i class="fas fa-volume-up"></i></button>
       <button id="settings-btn" title="Settings"><i class="fas fa-cog"></i></button>
+      <button id="manual-btn" title="Manual"><i class="fas fa-book"></i></button>
       <button id="load-btn" title="Load MD File"><i class="fas fa-file-upload"></i></button>
       <button id="download-btn" title="Download as MD"><i class="fas fa-download"></i></button>
     </div>
@@ -45,7 +52,7 @@
     <div id="list-popup" class="popup hidden">
       <div class="popup-header">
         <button id="download-all-btn" class="btn btn-dark">Download All</button>
-        <small>Double-Click for Rename, Drag-and-Drop to Reorder and Categorize</small>
+        <small>Double-Click for Rename</small>
         <button id="close-list" class="close-popup"><i class="fas fa-times"></i></button>
       </div>
       <div id="documents-list"></div>
@@ -104,6 +111,46 @@
       </div>
     </div>
 
+    <div id="manual-popup" class="popup hidden">
+      <div class="popup-header">
+        <h3>Manual</h3>
+        <button id="close-manual" class="close-popup"><i class="fas fa-times"></i></button>
+      </div>
+      <div id="manual-content" style="padding: 20px; overflow-y: auto; max-height: 60vh;">
+        <div class="manual-section">
+          <strong>Headers:</strong> <code># H1</code>, <code>## H2</code>, <code>### H3</code>, <code>#### H4</code>, <code>##### H5</code>, <code>###### H6</code>
+        </div>
+        
+        <div class="manual-section">
+          <strong>Text Formatting:</strong> <code>**bold**</code>, <code>*italic*</code>, <code>__underline__</code>, <code>`code`</code>
+        </div>
+        
+        <div class="manual-section">
+          <strong>Lists:</strong> <code>- unordered item</code>, <code>1. ordered item</code>
+        </div>
+        
+        <div class="manual-section">
+          <strong>Checkboxes:</strong> <code>[ ] unchecked</code>, <code>[x] checked</code>
+        </div>
+        
+        <div class="manual-section">
+          <strong>Links:</strong> <code>[text](url)</code>
+        </div>
+        
+        <div class="manual-section">
+          <strong>Images:</strong> <code>![alt text](image url)</code>
+        </div>
+        
+        <div class="manual-section">
+          <strong>Quotes:</strong> <code>> quote text</code>
+        </div>
+        
+        <div class="manual-section">
+          <strong>Horizontal Line:</strong> <code>---</code>
+        </div>
+      </div>
+    </div>
+
     <div id="status-bar">
       <div class="status-left">
         <a href="https://arazgholami.github.io/focus" class="logo-link">
@@ -115,6 +162,9 @@
         <a href="https://buymeacoffee.com/arazgholami" target="_blank" class="status-link">Donate</a>
       </div>
       <div class="status-right">
+        <span class="status-link formatting-shortcuts" style="font-size: 0.8rem; color: #888;">
+          Exit current tag: <code>&#8680;</code> Revert to markdown: <code>Backspace</code>
+        </span>
         <div id="counter"></div>
         <button id="new-btn" class="action-btn">New</button>
         <button id="save-btn" class="action-btn">Save</button>
@@ -125,6 +175,6 @@
   <input type="file" id="bg-file-input" accept="image/*" style="display: none;">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
   <script src="wysiwyg-markdown-editor.js"></script>
-  <script src="script.js?ver=A4"></script>
+  <script src="script.js?ver=2.0.0"></script>
 </body>
 </html>

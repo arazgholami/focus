@@ -18,7 +18,7 @@
   --toolbar-bg: rgba(255, 255, 255, 0.9);
   --toolbar-color: #000000;
   --popup-bg: #ffffff;
-  --border-color: #dddddd;
+  --border-color: #a3a3a3;
   --highlight-color: #000000;
   --button-hover: #f0f0f0;
 }
@@ -38,6 +38,17 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+/* Add selection styles */
+::selection {
+  background-color: #444444;
+  color: #ffffff;
+}
+
+::-moz-selection {
+  background-color: #444444;
+  color: #ffffff;
 }
 
 html, body {
@@ -305,8 +316,8 @@ datalist {
   margin: 0 auto;
   width: 100%;
   outline: none;
-  font-size: 1.2rem;
-  font-family: 'Vazir';
+  font-size: var(--div-font-size, 1rem);
+  font-family: var(--editor-font-family, 'Vazir');
   padding-top: 30px;
   min-height: 300px;
 }
@@ -320,31 +331,145 @@ datalist {
   display: block;
 }
 
-#editor h1 *, #editor h2 *, #editor h3 *, #editor div {
-  font-size: inherit !important;
+/* Base styles for all editor elements */
+#editor * {
+  font-family: inherit;
+  line-height: inherit;
 }
 
+/* Headers */
 #editor h1 {
+  font-size: var(--h1-font-size, 2rem) !important;
   margin-top: 0px;
+  margin-bottom: 0.1em;
 }
 
-#editor blockquote {
-  padding-inline-start: 1rem;
-  margin-inline-start: 0;
-  margin-inline-end: 0;
-  border-inline-start: 4px solid var(--border-color);
-  font-size: var(--div-font-size, 1rem) !important;
-  line-height: 1.5;
-  margin-top: 10px;
-  margin-bottom: 1.5em;
+#editor h2 {
+  font-size: var(--h2-font-size, 1.5rem) !important;
+  margin-bottom: 0.1em;
+}
+
+#editor h3 {
+  font-size: var(--h3-font-size, 1.3rem) !important;
+  margin-bottom: 0.1em;
+}
+
+#editor h4 {
+  font-size: calc(var(--h3-font-size, 1.3rem) * 0.9) !important;
+  margin-bottom: 0.1em;
+}
+
+#editor h5 {
+  font-size: calc(var(--h3-font-size, 1.3rem) * 0.8) !important;
+  margin-bottom: 0.1em;
+}
+
+#editor h6 {
+  font-size: calc(var(--h3-font-size, 1.3rem) * 0.7) !important;
+  margin-bottom: 0.1em;
+}
+
+/* Text Formatting */
+#editor strong, #editor b {
+  font-weight: bold;
+  font-size: inherit;
+}
+
+#editor em, #editor i {
+  font-style: italic;
+  font-size: inherit;
+}
+
+#editor u {
+  text-decoration: underline;
+  font-size: inherit;
 }
 
 #editor code {
-  font-size: var(--div-font-size, 1rem) !important;
   font-family: monospace;
-  background-color: #f0f0f0;
-  padding: 2px 5px 4px;
-  color: black;
+  background-color: #dbdbdb;
+  padding: 2px 3px 4px;
+  font-size: 0.9em;
+  color: var(--text-color);
+  margin: 0 5px;
+}
+
+/* Lists */
+#editor ul, #editor ol {
+  margin: 1em 0;
+  padding-left: 2em;
+  font-size: var(--div-font-size, 1rem);
+}
+
+#editor li {
+  margin: 0.5em 0;
+  font-size: inherit;
+}
+
+/* Checkboxes */
+#editor input[type="checkbox"] {
+  margin-right: 0.5em;
+  vertical-align: middle;
+}
+
+/* Links */
+#editor a {
+  color: #444444;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: inherit;
+}
+
+#editor a:hover {
+  color: var(--highlight-color);
+}
+
+/* Images */
+#editor img {
+  max-width: 100%;
+  height: auto;
+  margin: 1em 0;
+}
+
+/* Quotes */
+#editor blockquote {
+  padding-inline-start: 1rem;
+  margin: 1em 0;
+  border-inline-start: 4px solid var(--border-color);
+  font-size: var(--div-font-size, 1rem);
+  line-height: 1.5;
+  color: var(--text-color);
+  opacity: 0.9;
+}
+
+/* Horizontal Line */
+#editor hr {
+  border: none;
+  border-top: 2px solid var(--border-color);
+  margin: 0.5em 0;
+}
+
+/* Regular text */
+#editor div {
+  line-height: 1.6;
+  margin: 0.5em 0;
+  font-size: var(--div-font-size, 1rem);
+}
+
+/* RTL Support */
+#editor div:dir(rtl), 
+#editor ul:dir(rtl), 
+#editor ol:dir(rtl), 
+#editor li:dir(rtl), 
+#editor blockquote:dir(rtl) {
+  font-size: calc(var(--div-font-size, 1rem) * 0.95);
+  line-height: 1.5;
+}
+
+#editor div:dir(rtl), 
+#editor li:dir(rtl), 
+#editor blockquote:dir(rtl) {
+  text-align: right;
 }
 
 #formatting-popup {
@@ -459,6 +584,9 @@ datalist {
   padding: 2px 4px;
   border-radius: 3px;
   transition: background-color 0.2s;
+  overflow: hidden;
+  height: 30px;
+  width: 300px;
 }
 
 .document-title[contenteditable=true] {
@@ -568,6 +696,19 @@ datalist {
   background-color: #555555;
 }
 
+.formatting-shortcuts {
+  font-size: 12px;
+}
+
+.formatting-shortcuts code {
+  background-color: #e7e7e7;
+  color: #242424;
+  font-size: 12px;
+  padding: 4px 5px 2px;
+  font-family: 'Vazir';
+  border-radius: 4px;
+}
+
 @media (max-width: 768px) {
   #editor {
     padding: 70px 15px 50px;
@@ -623,18 +764,6 @@ datalist {
   text-align: right;
 }
 
-#editor h1 {
-  font-size: var(--h1-font-size, 2rem) !important;
-}
-
-#editor h2 {
-  font-size: var(--h2-font-size, 1.5rem) !important;
-}
-
-#editor h3 {
-  font-size: var(--h3-font-size, 1.3rem) !important;
-}
-
 #editor a {
   color: #444444;
   text-decoration: underline;
@@ -665,8 +794,8 @@ datalist {
 }
 
 .author {
-  font-size: 10px;
-  margin: -19px 0 0 5px;
+  font-size: 12px;
+  margin: -24px 0 0 0px;
   display: block;
   color: #707070;
 }
@@ -730,4 +859,24 @@ datalist {
 .popup-header small {
   font-size: 12px;
   color: gray;
+}
+
+.manual-section {
+  margin-bottom: 12px;
+}
+
+.manual-section strong {
+  color: var(--text-color);
+  font-size: 1rem;
+  margin-right: 8px;
+}
+
+.manual-section code {
+  background-color: var(--button-hover);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.9rem;
+  color: var(--text-color);
+  margin: 0 2px;
 }

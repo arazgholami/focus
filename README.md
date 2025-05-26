@@ -1,7 +1,11 @@
 # Focus
-Focus is a simple, clean, and distraction-free writing app designed to help your thoughts flow without interruption—no ads, no servers, no clutter. Everything is stored locally on your device, and you can save, edit, and download your writings as Markdown files.
-<br>
+Focus is a simple, clean, and distraction-free writing app with **real-time rendering markdown support** designed to help your thoughts flow without interruption—no ads, no servers, no clutter. Everything is stored locally on your device, and you can write, save, edit, and download your writings as Markdown files.
+<br><br>
 Demo: [https://arazgholami.github.io/focus/](https://arazgholami.github.io/focus/)
+<br>
+Version: 1.1
+<br>
+Powered by [WYSIWYG Markdown Editor](https://github.com/arazgholami/markdown-editor/)
 
 ## Features
 * **Distraction-Free UI** Hides toolbars while typing to keep you focused on your content with Optional nostalgic typewriter sounds
