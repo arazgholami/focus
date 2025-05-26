@@ -27,6 +27,7 @@ const counter = document.getElementById('counter');
 const listPopup = document.getElementById('list-popup');
 const documentsListElement = document.getElementById('documents-list');
 const fileInput = document.getElementById('file-input');
+editor.addEventListener('keydown', handleKeyDown);
 
 const sounds = {
   key: [
@@ -892,9 +893,8 @@ function handleFileUpload(e) {
     
     currentDocumentId = newId;
     saveDocumentsToStorage();
-    
-    
     loadDocument(newId);
+    updateCounter();
   };
   
   reader.readAsText(file);  
@@ -925,13 +925,11 @@ function convertMarkdownToHtml(markdown) {
 }
 
 function updateCounter() {
-  const text = editor.textContent;
-  const wordCount = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;  
+  const text = editor.textContent || '';
+  const words = text.trim().split(/\s+/).filter(word => word.length > 0);
+  const wordCount = text.trim() === '' ? 0 : words.length;
   
-  const paragraphText = editor.innerText.trim();
-  const paragraphCount = paragraphText === '' ? 0 : paragraphText.split(/\n\s*\n+/).length;
-  
-  counter.textContent = `${wordCount} words, ${paragraphCount} paragraphs`;
+  counter.textContent = `${wordCount} words`;
 }
 
 function handleShortcuts(e) {
@@ -988,4 +986,97 @@ function updateFontSizeLabel() {
 
 document.addEventListener('DOMContentLoaded', () => {
   init();
+  
+  // Add event listener for editor content changes
+  editor.addEventListener('input', () => {
+    updateCounter();
+    
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(() => {
+      saveCurrentDocumentContent();
+    }, 1000);
+  });
+  
+  // Add event listener for keyboard shortcuts
+  document.addEventListener('keydown', handleShortcuts);
+  
+  // Add event listeners for toolbar buttons
+  document.getElementById('fullscreen-btn').addEventListener('click', toggleFullscreen);
+  document.getElementById('list-btn').addEventListener('click', toggleDocumentsList);
+  document.getElementById('sound-btn').addEventListener('click', toggleSound);
+  document.getElementById('settings-btn').addEventListener('click', toggleSettings);
+  document.getElementById('load-btn').addEventListener('click', () => fileInput.click());
+  document.getElementById('download-btn').addEventListener('click', downloadCurrentDocument);
+  
+  // Add event listeners for status bar buttons
+  document.getElementById('new-btn').addEventListener('click', createNewDocument);
+  document.getElementById('save-btn').addEventListener('click', saveCurrentDocument);
+  
+  // Add event listeners for popup close buttons
+  document.getElementById('close-list').addEventListener('click', () => listPopup.classList.add('hidden'));
+  document.getElementById('close-settings').addEventListener('click', () => settingsPopup.classList.add('hidden'));
+  
+  // Add event listeners for file inputs
+  fileInput.addEventListener('change', handleFileUpload);
+  document.getElementById('bg-file-input').addEventListener('change', handleBackgroundUpload);
+  
+  // Add event listeners for settings controls
+  document.getElementById('font-family-select').addEventListener('change', (e) => {
+    fontFamily = e.target.value;
+    localStorage.setItem('focus_font_family', fontFamily);
+    applySettings();
+  });
+  
+  document.getElementById('font-size-slider').addEventListener('input', (e) => {
+    fontSize = parseInt(e.target.value);
+    localStorage.setItem('focus_font_size', fontSize);
+    updateFontSizeLabel();
+    applySettings();
+  });
+  
+  document.getElementById('editor-width-input').addEventListener('change', (e) => {
+    editorWidth = parseInt(e.target.value);
+    localStorage.setItem('focus_editor_width', editorWidth);
+    applySettings();
+  });
+  
+  document.getElementById('theme-toggle').addEventListener('click', toggleDarkMode);
+  
+  document.getElementById('volume-slider').addEventListener('input', (e) => {
+    soundVolume = parseInt(e.target.value) / 100;
+    document.getElementById('volume-value').textContent = e.target.value + '%';
+    updateSoundButton();
+    localStorage.setItem('focus_sound_volume', soundVolume);
+  });
+  
+  document.getElementById('upload-bg-btn').addEventListener('click', () => {
+    document.getElementById('bg-file-input').click();
+  });
+  
+  document.getElementById('default-bg').addEventListener('click', () => {
+    useCustomBg = false;
+    localStorage.setItem('focus_use_custom_bg', 'false');
+    updateBackgroundSelection();
+    applyBackground();
+  });
+  
+  document.getElementById('custom-bg').addEventListener('click', () => {
+    if (customBackground) {
+      useCustomBg = true;
+      localStorage.setItem('focus_use_custom_bg', 'true');
+      updateBackgroundSelection();
+      applyBackground();
+    }
+  });
+
+  document.getElementById('download-all-btn').addEventListener('click', downloadAllDocuments);
+
+  document.addEventListener('click', (e) => {
+    const volumePopup = document.getElementById('volume-popup');
+    const soundBtn = document.getElementById('sound-btn');
+    if (!volumePopup.contains(e.target) && !soundBtn.contains(e.target)) {
+      volumePopup.classList.add('hidden');
+    }
+  });
+
 });

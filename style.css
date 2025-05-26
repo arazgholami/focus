@@ -726,3 +726,8 @@ datalist {
 .hidden {
   display: none !important;
 }
+
+.popup-header small {
+  font-size: 12px;
+  color: gray;
+}
