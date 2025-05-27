@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- 
   Focus is a simple, clean, and distraction-free writing app designed to help your thoughts flow without interruption—no ads, no servers, no clutter. Everything is stored locally on your device, and you can save, edit, and download your writings as Markdown files.
-  Version 2.0.0
+  Version 2.1
   Author: Araz Gholami @arazgholami
   Email: contact@arazgholami.com
 -->
@@ -14,7 +14,7 @@
   <link rel="icon" href="focus-icon.png" type="image/png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="style.css?v2.0.0">
+  <link rel="stylesheet" href="style.css?v2.1">
 </head>
 <body>
   <div id="app">
@@ -65,8 +65,10 @@
       </div>
       <div id="settings-content">
         <div class="settings-section">
-          <label for="font-family-select">Font Family</label>
-          <select id="font-family-select" class="settings-control"></select>
+          <div class="settings-row">
+            <label for="font-family-select">Font Family</label>
+            <select id="font-family-select" class="settings-control"></select>
+          </div>
         </div>
         
         <div class="settings-section">
@@ -78,34 +80,40 @@
         </div>
         
         <div class="settings-section">
-          <label for="editor-width-input">Editor Width</label>
-          <div class="width-input-container">
-            <input type="number" id="editor-width-input" class="settings-control" value="830" min="400" max="1600">
-            <span class="unit-label">px</span>
+          <div class="settings-row">
+            <label for="editor-width-input">Editor Width</label>
+            <div class="width-input-container">
+              <input type="number" id="editor-width-input" class="settings-control" value="830" min="400" max="1600">
+              <span class="unit-label">px</span>
+            </div>
           </div>
         </div>
 
         <div class="settings-section">
-          <label for="theme-toggle">Theme</label>
-          <div class="theme-toggle-container">
-            <button id="theme-toggle" class="theme-toggle-btn">
-              <i class="fas fa-moon"></i> Dark Mode
-            </button>
+          <div class="settings-row">
+            <label for="theme-toggle">Theme</label>
+            <div class="theme-toggle-container">
+              <button id="theme-toggle" class="theme-toggle-btn">
+                <i class="fas fa-moon"></i> Dark Mode
+              </button>
+            </div>
           </div>
         </div>
 
         <div class="settings-section">
-          <label for="background-select">Background</label>
-          <div class="background-options">
-            <div class="background-option" id="default-bg">
-              <span>Default</span>
+          <div class="settings-row">
+            <label for="background-select">Background</label>
+            <div class="background-options">
+              <div class="background-option" id="default-bg">
+                <span>Default</span>
+              </div>
+              <div class="background-option hidden" id="custom-bg">
+                <span>Custom</span>
+              </div>
+              <button id="upload-bg-btn" class="btn btn-sm btn-outline-secondary mt-2">
+                <i class="fas fa-upload"></i> Upload Custom Background
+              </button>
             </div>
-            <div class="background-option hidden" id="custom-bg">
-              <span>Custom</span>
-            </div>
-            <button id="upload-bg-btn" class="btn btn-sm btn-outline-secondary mt-2">
-              <i class="fas fa-upload"></i> Upload Custom Background
-            </button>
           </div>
         </div>
       </div>
@@ -175,6 +183,6 @@
   <input type="file" id="bg-file-input" accept="image/*" style="display: none;">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
   <script src="wysiwyg-markdown-editor.js"></script>
-  <script src="script.js?ver=2.0.0"></script>
+  <script src="script.js?ver=2.1"></script>
 </body>
 </html>

@@ -91,7 +91,7 @@ function init() {
   if (currentDocumentId && documents[currentDocumentId]) {
     loadDocument(currentDocumentId);
   } else {
-    createNewDocument();
+    createNewDocument(true);
   }  
   updateCounter();  
   applyTheme();  
@@ -123,9 +123,9 @@ function loadPreferences() {
     updateSoundButton();
   } else {
     
-    soundVolume = 0.5;
-    document.getElementById('volume-slider').value = 50;
-    document.getElementById('volume-value').textContent = '50%';
+    soundVolume = 0.3;
+    document.getElementById('volume-slider').value = 30;
+    document.getElementById('volume-value').textContent = '30%';
     updateSoundButton();
   }  
   const savedThemePreference = localStorage.getItem('focus_dark_mode');
@@ -554,21 +554,30 @@ function updateSoundButton() {
   document.getElementById('sound-btn').innerHTML = `<i class="fas ${iconClass}"></i>`;
 }
 
-function createNewDocument() {
-  if (confirm('Are you sure you want to create a new document? This action cannot be undone.')) {
-    const newId = 'doc_' + Date.now();  
-    documents[newId] = {
-      id: newId,
-      title: 'Untitled Document',
-      content: '',
-      created: new Date().toISOString(),
-      updated: new Date().toISOString()
-    };  
-    currentDocumentId = newId;  
-    saveDocumentsToStorage();  
-    loadDocument(newId);  
-    editor.focus();
+function createNewDocument(silent = false) {
+  console.log(silent);
+  if (silent) {
+    generateNewDocument()
+  } else {
+    if (confirm('Are you sure you want to create a new document? This action cannot be undone.')) {
+      generateNewDocument()
+    }
   }
+}
+
+function generateNewDocument() {
+  const newId = 'doc_' + Date.now();  
+  documents[newId] = {
+    id: newId,
+    title: 'Untitled Document',
+    content: '',
+    created: new Date().toISOString(),
+    updated: new Date().toISOString()
+  };  
+  currentDocumentId = newId;  
+  saveDocumentsToStorage();  
+  loadDocument(newId);  
+  editor.focus();
 }
 
 function saveCurrentDocumentContent() {
@@ -780,7 +789,7 @@ function deleteDocument(id) {
   saveDocumentsToStorage();  
   updateDocumentsList();  
   if (id === currentDocumentId) {
-    createNewDocument();
+    createNewDocument(true);
   }
 }
 
@@ -1182,10 +1191,47 @@ function initBootstrapTooltips() {
 function updateFontSizeLabel() {
   const fontSizeLabel = document.getElementById('font-size-value');
   if (fontSize === 120) {
-    fontSizeLabel.textContent = '120% (Default)';
+    fontSizeLabel.textContent = '120%';
   } else {
     fontSizeLabel.textContent = fontSize + '%';
   }
+}
+
+// Make popup draggable by header
+function makePopupDraggable(popupId) {
+  const popup = document.getElementById(popupId);
+  if (!popup) return;
+  const header = popup.querySelector('.popup-header');
+  if (!header) return;
+  let offsetX = 0, offsetY = 0, startX = 0, startY = 0, isDragging = false;
+
+  header.addEventListener('mousedown', function(e) {
+    if (e.button !== 0) return; // Only left mouse button
+    isDragging = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    const rect = popup.getBoundingClientRect();
+    offsetX = startX - rect.left;
+    offsetY = startY - rect.top;
+    document.body.style.userSelect = 'none';
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (!isDragging) return;
+    let x = e.clientX - offsetX;
+    let y = e.clientY - offsetY;
+    // Keep popup within viewport
+    x = Math.max(0, Math.min(window.innerWidth - popup.offsetWidth, x));
+    y = Math.max(0, Math.min(window.innerHeight - popup.offsetHeight, y));
+    popup.style.left = x + 'px';
+    popup.style.top = y + 'px';
+    popup.style.transform = 'none';
+  });
+
+  document.addEventListener('mouseup', function() {
+    isDragging = false;
+    document.body.style.userSelect = '';
+  });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1214,7 +1260,11 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('download-btn').addEventListener('click', downloadCurrentDocument);
   
   // Add event listeners for status bar buttons
-  document.getElementById('new-btn').addEventListener('click', createNewDocument);
+  document.getElementById('new-btn').addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    createNewDocument();
+  });
   document.getElementById('save-btn').addEventListener('click', saveCurrentDocument);
   
   // Add event listeners for popup close buttons
@@ -1285,4 +1335,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  makePopupDraggable('settings-popup');
+  makePopupDraggable('manual-popup');
+  makePopupDraggable('list-popup');
 });
