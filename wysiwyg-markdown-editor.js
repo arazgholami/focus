@@ -1,6 +1,6 @@
 /**
  * WYSIWYG Markdown Editor
- * Version: 1.0.0
+ * Version: 2.5
  * A lightweight, real-time markdown editor with live rendering and LTR-RTL support
  * Usage: MarkdownEditor.init('your-div-id');
  * Author: Araz Gholami @arazgholami
@@ -72,6 +72,49 @@ class MarkdownEditor {
                 return;
             }
 
+            // Handle Shift+Enter in blockquotes
+            if (e.shiftKey) {
+                let currentElement = range.startContainer;
+                if (currentElement.nodeType === Node.TEXT_NODE) {
+                    currentElement = currentElement.parentElement;
+                }
+                
+                if (currentElement.tagName === 'BLOCKQUOTE') {
+                    const br = document.createElement('br');
+                    if (range.startContainer.nodeType === Node.TEXT_NODE) {
+                        const text = range.startContainer.textContent;
+                        const beforeText = text.substring(0, range.startOffset);
+                        const afterText = text.substring(range.startOffset);
+                        
+                        // Create new text nodes for before and after text
+                        const beforeNode = document.createTextNode(beforeText);
+                        const afterNode = document.createTextNode(afterText);
+                        
+                        // Replace the original text node with our new nodes and br
+                        const parent = range.startContainer.parentNode;
+                        parent.replaceChild(beforeNode, range.startContainer);
+                        parent.insertBefore(br, beforeNode.nextSibling);
+                        
+                        // Add non-breaking space after br
+                        const nbsp = document.createTextNode('\u00A0');
+                        parent.insertBefore(nbsp, br.nextSibling);
+                        parent.insertBefore(afterNode, nbsp.nextSibling);
+                        
+                        // Set cursor position after the nbsp
+                        range.setStart(afterNode, 0);
+                        range.setEnd(afterNode, 0);
+                        selection.removeAllRanges();
+                        selection.addRange(range);
+                    } else {
+                        currentElement.appendChild(br);
+                        // Add non-breaking space after br
+                        const nbsp = document.createTextNode('\u00A0');
+                        currentElement.appendChild(nbsp);
+                        this.setCursorAfter(nbsp);
+                    }
+                    return;
+                }
+            }
             
             let currentElement = range.startContainer;
             if (currentElement.nodeType === Node.TEXT_NODE) {
