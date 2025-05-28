@@ -626,6 +626,10 @@ function loadDocument(id) {
   editor.innerHTML = documents[id].content;  
   updateCounter();  
   localStorage.setItem('focus_current_document', currentDocumentId);
+
+  if (typeof initDraggableImages === 'function') {
+    initDraggableImages(editor);
+  }
 }
 
 function toggleDocumentsList() {
@@ -1237,14 +1241,13 @@ function makePopupDraggable(popupId) {
 document.addEventListener('DOMContentLoaded', () => {
   init();
   
-  // Add event listener for editor content changes
   editor.addEventListener('input', () => {
     updateCounter();
-    
-    clearTimeout(typingTimer);
-    typingTimer = setTimeout(() => {
-      saveCurrentDocumentContent();
-    }, 1000);
+    saveCurrentDocumentContent();
+  });
+
+  editor.addEventListener('click', () => {
+    saveCurrentDocumentContent();
   });
   
   // Add event listener for keyboard shortcuts
