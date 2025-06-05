@@ -1,3 +1,5 @@
+<strong>This repo is transfered to <a href="https://github.com/arazgholami/odak.app">Odak.app</a></strong>
+
 # Focus
 Focus is a simple, clean, and distraction-free writing app with **real-time rendering markdown support** designed to help your thoughts flow without interruption—no ads, no servers, no clutter. Everything is stored locally on your device, and you can write, save, edit, and download your writings as Markdown files.
 <br>Version: 3.0<br><br>
